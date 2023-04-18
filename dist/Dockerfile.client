@@ -1,0 +1,43 @@
+FROM --platform=${BUILDPLATFORM} golang:alpine as base
+RUN echo $HTTP_PROXY && echo $http_proxy
+RUN apk update
+RUN apk add -U --no-cache ca-certificates && update-ca-certificates
+RUN apk add git
+WORKDIR /src
+ENV CGO_ENABLED=0
+ENV GOPRIVATE "github.com/neticdk-k8s/*"
+COPY go.* .
+RUN --mount=type=cache,target=/go/pkg/modx \
+    --mount=type=secret,id=netrc,target=/root/.netrc \
+    go mod download
+
+FROM base AS builder
+ARG TARGETOS
+ARG TARGETARCH
+
+RUN --mount=target= \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=secret,id=netrc,target=/root/.netrc \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /out/k8s-inventory-client \
+	-v \
+	-tags release \
+	-ldflags '-s -w'
+
+FROM scratch AS bin-unix
+COPY --from=builder /out/k8s-inventory-client /k8s-inventory-client
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+FROM bin-unix AS bin-linux
+FROM bin-unix AS bin-darwin
+
+FROM bin-${TARGETOS} as bin
+
+EXPOSE 8086
+ENTRYPOINT ["/k8s-inventory-client"]
+
+ARG COMMIT=""
+ARG VERSION=""
+ARG BUILD_TS=""
+
+LABEL commit="$COMMIT" version="$VERSION" buildts="$BUILD_TS"

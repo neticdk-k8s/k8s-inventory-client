@@ -15,10 +15,10 @@ bin/k8s-inventory-client:
 	@DOCKER_BUILDKIT=1 docker build --target bin \
 		--output bin/ \
 		--platform ${PLATFORM} \
-		--tag netic/k8s-inventory-collector \
+		--tag neticdk-k8s/k8s-inventory-client \
 		.
 	@DOCKER_BUILDKIT=1 docker build --platform ${PLATFORM} \
-		--tag netic/k8s-inventory-collector \
+		--tag neticdk-k8s/k8s-inventory-client \
 		.
 
 # Runs go lint
@@ -62,15 +62,15 @@ build2: clean fmt | $(BIN)
 .PHONY: docker-build
 docker-build-client:
 	@echo "Building k8s-inventory-client image..."
-	DOCKER_BUILDKIT=1 docker build -t netic/k8s-inventory-client -f dist/Dockerfile.client .
+	DOCKER_BUILDKIT=1 docker build --secret id=netrc,src=/home/kn/.netrc -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
 
 # Tag and push docker client
 .PHONY: docker-push
 docker-push:
-	docker tag netic/k8s-inventory-client:latest registry.netic.dk/k8s-inventory-collector/client:latest
-	docker push registry.netic.dk/k8s-inventory-collector/client:latest
-	docker tag netic/k8s-inventory-client:latest registry.netic.dk/k8s-inventory-collector/client:${VERSION}
-	docker push registry.netic.dk/k8s-inventory-collector/client:${VERSION}
+	docker tag neticdk-k8s/k8s-inventory-client:latest ghcr.io/neticdk-k8s/k8s-inventory-client:latest
+	docker push ghcr.io/neticdk-k8s/k8s-inventory-client:latest
+	docker tag neticdk-k8s/k8s-inventory-client:latest ghcr.io/neticdk-k8s/k8s-inventory-client:${VERSION}
+	docker push ghcr.io/neticdk-k8s/k8s-inventory-client:${VERSION}
 
 # Build, tag and push docker images
 .PHONY: docker-all
