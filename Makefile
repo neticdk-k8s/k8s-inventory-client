@@ -62,7 +62,7 @@ build2: clean fmt | $(BIN)
 .PHONY: docker-build
 docker-build-client:
 	@echo "Building k8s-inventory-client image..."
-	DOCKER_BUILDKIT=1 docker build --secret id=netrc,src=/home/kn/.netrc -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
+	DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
 
 # Tag and push docker client
 .PHONY: docker-push

@@ -5,10 +5,8 @@ RUN apk add -U --no-cache ca-certificates && update-ca-certificates
 RUN apk add git
 WORKDIR /src
 ENV CGO_ENABLED=0
-ENV GOPRIVATE "github.com/neticdk-k8s/*"
 COPY go.* .
 RUN --mount=type=cache,target=/go/pkg/modx \
-    --mount=type=secret,id=netrc,target=/root/.netrc \
     go mod download
 
 FROM base AS builder
@@ -18,7 +16,6 @@ ARG TARGETARCH
 RUN --mount=target= \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=secret,id=netrc,target=/root/.netrc \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /out/k8s-inventory-client \
 	-v \
 	-tags release \
