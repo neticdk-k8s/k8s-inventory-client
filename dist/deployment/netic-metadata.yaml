@@ -1,0 +1,61 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: netic-metadata-system
+  labels:
+    name: netic-metadata-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: operator--myoperator--19999---myprovider--29999
+  namespace: netic-metadata-system
+  labels:
+    netic.dk/owned-by: operator
+    netic.dk/operator-name: myoperator
+    netic.dk/operator-subscription-id: "19999"
+    netic.dk/provider-name: "myprovider"
+    netic.dk/provider-subscription-id: "29999"
+data:
+  operator-name: myoperator
+  operator-subscription-id: "19999"
+  provider-name: myprovider
+  provider-subscription-id: "29999"
+  customer-name: mycustomer
+  customer-id: "39999"
+  billing-subject: operator
+  billing-granularity: cluster
+  cluster-name: prod999
+  cluster-fqdn: prod999.myprovider.dedicated.k8s.netic.dk
+  cluster-type: dedicated
+  cluster-description: "mycustomer production cluster"
+  cluster-resilience-zone: "early-adopters-1"
+  infrastructure-environment-type: shared
+  environment-name: production
+  has-technical-operations: "true"
+  has-technical-management: "true"
+  has-application-operations: "true"
+  has-application-management: "false"
+  has-custom-operations: "false"
+  custom-operations-url: ""
+  has-capacity-management: "false"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-testt-49999-testt-frontend-app-metadata
+  namespace: netic-metadata-system
+  labels:
+    netic.dk/owned-by: tenant
+    netic.dk/ownerns: testt-frontend-app
+    netic.dk/tenant: testt
+    netic.dk/subscription: "49999"
+data:
+  tenant-name: testt
+  tenant-ns: testt-frontend-app
+  business-unit-id: sales
+  tenant-subscription-id: "49999"
+  has-application-operations: "true"
+  has-application-management: "false"
+  has-capacity-management: "false"

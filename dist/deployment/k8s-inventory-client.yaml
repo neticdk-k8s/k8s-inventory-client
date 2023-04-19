@@ -1,0 +1,172 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-inventory-client
+  namespace: netic-metadata-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-inventory-client
+  labels:
+    app.kubernetes.io/name: k8s-inventory-client
+    app.kubernetes.io/instance: k8s-inventory-client
+    app.kubernetes.io/managed-by: kustomize
+rules:
+  - apiGroups:
+      - ""
+      - apps
+      - autoscaling
+      - cert-manager.io
+      - batch
+      - core
+      - extensions
+      - external-secrets.io
+      - policy
+      - rbac.authorization.k8s.io
+      - helm.toolkit.fluxcd.io
+      - kci.rocks
+      - kustomize.toolkit.fluxcd.io
+      - monitoring.coreos.com
+      - networking.k8s.io
+      - project.tcs.trifork.com
+      - crd.projectcalico.org
+      - projectcontour.io
+      - rabbitmq.com
+      - source.toolkit.fluxcd.io
+      - storage.k8s.io
+      - velero.io
+    resources:
+      - backups
+      - bootstrapconfigs
+      - clusterinformations
+      - configmaps
+      - cronjobs
+      - daemonsets
+      - databases
+      - dbinstances
+      - deployments
+      - endpoints
+      - gitrepositories
+      - helmcharts
+      - helmreleases
+      - helmrepositories
+      - httpproxies
+      - ingresses
+      - issuers
+      - jobs
+      - kustomizations
+      - namespaceconfigs
+      - namespaces
+      - networkpolicies
+      - nodes
+      - persistentvolumeclaims
+      - persistentvolumes
+      - pods
+      - projectbootstraps
+      - prometheuses
+      - rabbitmqclusters
+      - replicasets
+      - schedules
+      - services
+      - secretstores
+      - statefulsets
+      - storageclasses
+    verbs:
+      - get
+      - list
+      - watch
+      - head
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-inventory-client
+  labels:
+    app.kubernetes.io/name: k8s-inventory-client
+    app.kubernetes.io/instance: k8s-inventory-client
+    app.kubernetes.io/managed-by: kustomize
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-inventory-client
+subjects:
+  - kind: ServiceAccount
+    namespace: netic-metadata-system
+    name: k8s-inventory-client
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-inventory-client
+  namespace: netic-metadata-system
+  labels:
+    app.kubernetes.io/name: k8s-inventory-client
+    app.kubernetes.io/instance: k8s-inventory-client
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8087
+      protocol: TCP
+      targetPort: 8087
+  selector:
+    app.kubernetes.io/name: k8s-inventory-client
+    app.kubernetes.io/instance: k8s-inventory-client
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-inventory-client
+  namespace: netic-metadata-system
+  labels:
+    app.kubernetes.io/name: k8s-inventory-client
+    app.kubernetes.io/instance: k8s-inventory-client
+    app.kubernetes.io/version: 0.0.0
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: k8s-inventory-client
+      app.kubernetes.io/instance: k8s-inventory-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: k8s-inventory-client
+        app.kubernetes.io/instance: k8s-inventory-client
+        app.kubernetes.io/version: 0.0.0
+        app.kubernetes.io/managed-by: kustomize
+    spec:
+      serviceAccountName: k8s-inventory-client
+      containers:
+        - image: ghcr.io/neticdk-k8s/k8s-inventory-client:latest
+          imagePullPolicy: Always
+          name: client
+          ports:
+            - containerPort: 8087
+              name: http
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              cpu: "50m"
+              memory: "100Mi"
+          env:
+            - name: LOG_LEVEL
+              value: debug
+            - name: COLLECT_INTERVAL
+              value: 30m
+            - name: UPLOAD_INVENTORY
+              value: "false"
+          securityContext:
+            runAsUser: 20000
+            runAsGroup: 20000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - all
