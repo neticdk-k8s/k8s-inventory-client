@@ -1,8 +1,11 @@
 FROM --platform=${BUILDPLATFORM} golang:alpine as base
-RUN echo $HTTP_PROXY && echo $http_proxy
+
 RUN apk update
 RUN apk add -U --no-cache ca-certificates && update-ca-certificates
 RUN apk add git
+
+RUN adduser -S -u 20000 -H inventory
+
 WORKDIR /src
 ENV CGO_ENABLED=0
 COPY go.* .
@@ -22,8 +25,11 @@ RUN --mount=target= \
 	-ldflags '-s -w'
 
 FROM scratch AS bin-unix
+COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /out/k8s-inventory-client /k8s-inventory-client
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+USER inventory
 
 FROM bin-unix AS bin-linux
 FROM bin-unix AS bin-darwin

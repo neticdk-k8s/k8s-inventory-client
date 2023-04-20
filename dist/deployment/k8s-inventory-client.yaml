@@ -163,8 +163,7 @@ spec:
             - name: UPLOAD_INVENTORY
               value: "false"
           securityContext:
-            runAsUser: 20000
-            runAsGroup: 20000
+            runAsNonRoot: true
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
