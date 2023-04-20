@@ -31,7 +31,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /out/k8s-inventory-client /k8s-inventory-client
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-USER inventory
+USER 20000
 
 FROM bin-unix AS bin-linux
 FROM bin-unix AS bin-darwin
