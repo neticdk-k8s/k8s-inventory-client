@@ -156,8 +156,6 @@ spec:
               cpu: "50m"
               memory: "100Mi"
           env:
-            - name: LOG_LEVEL
-              value: debug
             - name: COLLECT_INTERVAL
               value: 30m
             - name: UPLOAD_INVENTORY

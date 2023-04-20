@@ -18,7 +18,7 @@ func getDefaultValue(envVar, def string) string {
 }
 
 func main() {
-	logLevel := getDefaultValue("LOG_LEVEL", "warn")
+	logLevel := getDefaultValue("LOG_LEVEL", "info")
 	logFormatter := getDefaultValue("LOG_FORMATTER", "json")
 	logging.InitLogger(logLevel, logFormatter)
 
