@@ -1,7 +1,6 @@
 .DEFAULT_GOAL := build
 VERSION ?= $(shell git describe --tags --always --match=v* 2> /dev/null || echo v0)
 COMMIT = $(shell git rev-parse HEAD)
-BUILD_TS = $(shell date +%FT%T%:z)
 MODULEPATH := $(shell go mod edit -json 2> /dev/null | jq -r '.Module.Path')
 
 BIN = $(CURDIR)/bin
@@ -47,7 +46,7 @@ build: clean fmt lint | $(BIN)
 		-v \
 		-a \
 		-tags release \
-		-ldflags '-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(BUILD_TS)'
+		-ldflags '-s -w -X main.VERSION=$(VERSION) -X main.COMMIT=$(COMMIT)'
 
 # Runs go build
 .PHONY: build2
@@ -56,13 +55,13 @@ build2: clean fmt | $(BIN)
 	CGO_ENABLED=0 go build -o $(BIN)/k8s-inventory-client \
 		-v \
 		-tags release \
-		-ldflags '-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(BUILD_TS)'
+		-ldflags '-s -w -X main.VERSION=$(VERSION) -X main.COMMIT=$(COMMIT)'
 
 # Build docker client
 .PHONY: docker-build
 docker-build-client:
 	@echo "Building k8s-inventory-client image..."
-	DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
+	DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
 
 # Tag and push docker client
 .PHONY: docker-push

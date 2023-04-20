@@ -16,13 +16,15 @@ FROM base AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
+ARG VERSION
+ARG COMMIT
+
 RUN --mount=target= \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /out/k8s-inventory-client \
-	-v \
-	-tags release \
-	-ldflags '-s -w'
+    -tags release \
+    -ldflags "-s -w -X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT}"
 
 FROM scratch AS bin-unix
 COPY --from=builder /etc/passwd /etc/passwd
@@ -39,8 +41,7 @@ FROM bin-${TARGETOS} as bin
 EXPOSE 8086
 ENTRYPOINT ["/k8s-inventory-client"]
 
-ARG COMMIT=""
-ARG VERSION=""
-ARG BUILD_TS=""
+ARG COMMIT=
+ARG VERSION=
 
-LABEL commit="$COMMIT" version="$VERSION" buildts="$BUILD_TS"
+LABEL commit="$COMMIT" version="$VERSION"
