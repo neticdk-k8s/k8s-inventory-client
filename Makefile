@@ -59,7 +59,7 @@ build2: clean fmt | $(BIN)
 
 # Build docker client
 .PHONY: docker-build
-docker-build-client:
+docker-build:
 	@echo "Building k8s-inventory-client image..."
 	DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
 
