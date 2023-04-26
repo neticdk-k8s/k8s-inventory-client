@@ -107,7 +107,7 @@ func (c *InventoryCollection) Upload() {
 		return
 	}
 
-	req, err := http.NewRequest("POST", serverAPIEndpoint, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("PUT", serverAPIEndpoint, bytes.NewBuffer(payload))
 	if err != nil {
 		log.Error(err)
 		return
