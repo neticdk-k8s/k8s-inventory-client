@@ -19,7 +19,7 @@ type infProviders struct {
 	GCP   bool
 }
 
-func DetectClusterProvider(cs *ck.Clientset) string {
+func DetectKubernetesProvider(cs *ck.Clientset) string {
 	provider, err := detector.DetectProvider(context.TODO(), cs)
 	if err != nil {
 		log.Info("Could not detect cluster provider")
@@ -28,8 +28,8 @@ func DetectClusterProvider(cs *ck.Clientset) string {
 	return provider
 }
 
-func DetectInfrastructureProvider(cs *ck.Clientset, clusterProvider string) string {
-	switch clusterProvider {
+func DetectInfrastructureProvider(cs *ck.Clientset, kubernetesProvider string) string {
+	switch kubernetesProvider {
 	case "aks":
 		return "azure"
 	case "eks":

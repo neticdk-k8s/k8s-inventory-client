@@ -23,11 +23,11 @@ func CollectCluster(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
 	i.Cluster.GitCommit = v.GitCommit
 	i.Cluster.BuildDate = v.BuildDate
 
-	i.Cluster.ClusterProvider = detect.DetectClusterProvider(cs)
-	i.Cluster.InfrastructureProvider = detect.DetectInfrastructureProvider(cs, i.Cluster.ClusterProvider)
+	i.Cluster.KubernetesProvider = detect.DetectKubernetesProvider(cs)
+	i.Cluster.InfrastructureProvider = detect.DetectInfrastructureProvider(cs, i.Cluster.KubernetesProvider)
 
 	if i.Cluster.InfrastructureProvider == "docker" {
-		i.Cluster.ClusterProvider = "kind"
+		i.Cluster.KubernetesProvider = "kind"
 	}
 
 	return
