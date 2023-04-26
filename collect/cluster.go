@@ -46,11 +46,11 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) (errors []erro
 	}
 
 	cm := metaDataConfigMaps[0]
-	i.Cluster.ClusterName = cm["cluster-name"]
-	i.Cluster.ClusterFQDN = cm["cluster-fqdn"]
+	i.Cluster.Name = cm["cluster-name"]
+	i.Cluster.FQDN = cm["cluster-fqdn"]
 	i.Cluster.ClusterType = cm["cluster-type"]
-	i.Cluster.ClusterDescription = cm["cluster-description"]
-	i.Cluster.ClusterResilienceZone = cm["cluster-resilience-zone"]
+	i.Cluster.Description = cm["cluster-description"]
+	i.Cluster.ResilienceZone = cm["cluster-resilience-zone"]
 	i.Cluster.EnvironmentName = cm["environment-name"]
 	i.Cluster.InfrastructureEnvironmentType = cm["infrastructure-environment-type"]
 	if i.Cluster.EnvironmentName == "" {
@@ -72,8 +72,8 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) (errors []erro
 	i.Cluster.HasCustomOperations, _ = strconv.ParseBool(cm["has-custom-operations"])
 	i.Cluster.CustomOperationsURL = cm["custom-operations-url"]
 
-	if i.Cluster.ClusterFQDN == "" && i.Cluster.ClusterName != "" && i.Cluster.ProviderName != "" && i.Cluster.ClusterType != "" {
-		i.Cluster.ClusterFQDN = fmt.Sprintf("%s.%s.%s.k8s.netic.dk", i.Cluster.ClusterName, i.Cluster.ProviderName, i.Cluster.ClusterType)
+	if i.Cluster.FQDN == "" && i.Cluster.Name != "" && i.Cluster.ProviderName != "" && i.Cluster.ClusterType != "" {
+		i.Cluster.FQDN = fmt.Sprintf("%s.%s.%s.k8s.netic.dk", i.Cluster.Name, i.Cluster.ProviderName, i.Cluster.ClusterType)
 	}
 
 	return

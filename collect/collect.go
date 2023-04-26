@@ -130,7 +130,7 @@ func (c *InventoryCollection) Upload() {
 		return
 	}
 
-	log.Infof("Uploaded inventory for: %s (%d)", c.Inventory.Cluster.ClusterName, res.StatusCode)
+	log.Infof("Uploaded inventory for: %s (%d)", c.Inventory.Cluster.Name, res.StatusCode)
 }
 
 func (c *InventoryCollection) ServeHTTP(w http.ResponseWriter, r *http.Request) {
