@@ -2,7 +2,6 @@ package collect
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/Masterminds/semver"
 	inventory "github.com/neticdk-k8s/k8s-inventory"
@@ -57,19 +56,19 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) (errors []erro
 		i.Cluster.EnvironmentName = "NA"
 	}
 	i.Cluster.OperatorName = cm["operator-name"]
-	i.Cluster.OperatorSubscriptionID, _ = strconv.Atoi(cm["operator-subscription-id"])
+	i.Cluster.OperatorSubscriptionID = parseHorrorID(cm["operator-subscription-id"], 744)
 	i.Cluster.ProviderName = cm["provider-name"]
-	i.Cluster.ProviderSubscriptionID, _ = strconv.Atoi(cm["provider-subscription-id"])
+	i.Cluster.ProviderSubscriptionID = parseHorrorID(cm["provider-subscription-id"], 744)
 	i.Cluster.CustomerName = cm["customer-name"]
-	i.Cluster.CustomerID, _ = strconv.Atoi(cm["customer-id"])
+	i.Cluster.CustomerID = parseHorrorID(cm["customer-id"], 744)
 	i.Cluster.BillingSubject = cm["billing-subject"]
 	i.Cluster.BillingGranularity = cm["billing-granularity"]
-	i.Cluster.HasTechnicalOperations, _ = strconv.ParseBool(cm["has-technical-operations"])
-	i.Cluster.HasTechnicalManagement, _ = strconv.ParseBool(cm["has-technical-management"])
-	i.Cluster.HasApplicationOperations, _ = strconv.ParseBool(cm["has-application-operations"])
-	i.Cluster.HasApplicationManagement, _ = strconv.ParseBool(cm["has-application-management"])
-	i.Cluster.HasCapacityManagement, _ = strconv.ParseBool(cm["has-capacity-management"])
-	i.Cluster.HasCustomOperations, _ = strconv.ParseBool(cm["has-custom-operations"])
+	i.Cluster.HasTechnicalOperations = parseHorrorBool(cm["has-technical-operations"])
+	i.Cluster.HasTechnicalManagement = parseHorrorBool(cm["has-technical-management"])
+	i.Cluster.HasApplicationOperations = parseHorrorBool(cm["has-application-operations"])
+	i.Cluster.HasApplicationManagement = parseHorrorBool(cm["has-application-management"])
+	i.Cluster.HasCapacityManagement = parseHorrorBool(cm["has-capacity-management"])
+	i.Cluster.HasCustomOperations = parseHorrorBool(cm["has-custom-operations"])
 	i.Cluster.CustomOperationsURL = cm["custom-operations-url"]
 
 	if i.Cluster.FQDN == "" && i.Cluster.Name != "" && i.Cluster.ProviderName != "" && i.Cluster.ClusterType != "" {
@@ -97,10 +96,10 @@ func CollectSCSTenants(cs *ck.Clientset, i *inventory.Inventory) (errors []error
 		tenant.Name = tenantDataConfigMaps[n]["tenant-name"]
 		tenant.Namespace = tenantDataConfigMaps[n]["tenant-ns"]
 		tenant.BusinessUnitID = tenantDataConfigMaps[n]["business-unit-id"]
-		tenant.SubscriptionID, _ = strconv.Atoi(tenantDataConfigMaps[n]["tenant-subscription-id"])
-		tenant.HasApplicationOperations, _ = strconv.ParseBool(tenantDataConfigMaps[n]["has-application-operations"])
-		tenant.HasApplicationManagement, _ = strconv.ParseBool(tenantDataConfigMaps[n]["has-application-management"])
-		tenant.HasCapacityManagement, _ = strconv.ParseBool(tenantDataConfigMaps[n]["has-capacity-management"])
+		tenant.SubscriptionID = parseHorrorID(tenantDataConfigMaps[n]["tenant-subscription-id"], 744)
+		tenant.HasApplicationOperations = parseHorrorBool(tenantDataConfigMaps[n]["has-application-operations"])
+		tenant.HasApplicationManagement = parseHorrorBool(tenantDataConfigMaps[n]["has-application-management"])
+		tenant.HasCapacityManagement = parseHorrorBool(tenantDataConfigMaps[n]["has-capacity-management"])
 		i.Tenants = append(i.Tenants, tenant)
 	}
 
