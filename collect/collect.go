@@ -90,7 +90,6 @@ func (c *InventoryCollection) Collect() {
 
 		if c.UploadInventory {
 			c.Upload()
-			return
 		}
 
 		sleepNext()
