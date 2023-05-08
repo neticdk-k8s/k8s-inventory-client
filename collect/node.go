@@ -30,11 +30,15 @@ func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
 func CollectNode(o v1.Node) (*inventory.Node, error) {
 	n := inventory.NewNode()
 
-	labels := o.ObjectMeta.GetLabels()
+	labels := o.GetLabels()
 
 	criName, criVersion := parseContainerRuntimeVersion(o.Status.NodeInfo.ContainerRuntimeVersion)
 
 	n.Name = o.GetName()
+	n.Annotations = filterAnnotations(&o)
+	if len(labels) > 0 {
+		n.Labels = labels
+	}
 	n.Role = strings.Join(rolesFromNodeLabels(labels), ",")
 	n.KubeProxyVersion = o.Status.NodeInfo.KubeProxyVersion
 	n.KubeletVersion = o.Status.NodeInfo.KubeletVersion

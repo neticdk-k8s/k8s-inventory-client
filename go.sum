@@ -279,10 +279,8 @@ github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d/go.mod h1:+n7T8m
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
-github.com/neticdk-k8s/k8s-inventory v0.0.4 h1:5eZ2yi/RZZOZ6Tzf6ZblVzp6ti9QOwmAEWfk+8xqvcU=
-github.com/neticdk-k8s/k8s-inventory v0.0.4/go.mod h1:4aCcYuNgTYHX6hwPo7bbLrVg0NA3TWrA19ZZnW6jg5w=
-github.com/neticdk-k8s/k8s-inventory v0.0.5 h1:/Ss4KWckbcGFbKRQA627lt3HFfITwXJhoEDt/MlrKg0=
-github.com/neticdk-k8s/k8s-inventory v0.0.5/go.mod h1:4aCcYuNgTYHX6hwPo7bbLrVg0NA3TWrA19ZZnW6jg5w=
+github.com/neticdk-k8s/k8s-inventory v0.0.6 h1:abXXAOBRGoju82t88sxuB4yeQ38/V9cmlF9aOsycwnM=
+github.com/neticdk-k8s/k8s-inventory v0.0.6/go.mod h1:4aCcYuNgTYHX6hwPo7bbLrVg0NA3TWrA19ZZnW6jg5w=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
@@ -782,7 +780,6 @@ k8s.io/kube-openapi v0.0.0-20200121204235-bf4fb3bd569c/go.mod h1:GRQhZsXIAJ1xR0C
 k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65/go.mod h1:sX9MT8g7NVZM5lVL/j8QyCCJe8YSMW30QvGZWaCIDIk=
 k8s.io/kube-openapi v0.0.0-20230327201221-f5883ff37f0c h1:EFfsozyzZ/pggw5qNx7ftTVZdp7WZl+3ih89GEjYEK8=
 k8s.io/kube-openapi v0.0.0-20230327201221-f5883ff37f0c/go.mod h1:byini6yhqGC14c3ebc/QwanvYwhuMWF6yz2F8uwW8eg=
-k8s.io/kubernetes v1.15.0-alpha.0/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 k8s.io/kubernetes v1.26.4 h1:/c00/JjOltBwhNOBs+hO433Q3fRyeWWtyYF6z2xtmag=
 k8s.io/kubernetes v1.26.4/go.mod h1:NxzR7U7mS+OGa3J/qweI86Pek//mlfHqDgt6NNGdz8g=
 k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
