@@ -29,14 +29,16 @@ func CollectVeleroBackups(cs *ck.Clientset) ([]*inventory.VeleroBackup, error) {
 			itemsBackedUp = b.Status.Progress.ItemsBackedUp
 			totalItems = b.Status.Progress.TotalItems
 		}
-		veleroBackup := &inventory.VeleroBackup{
-			Name:                b.ObjectMeta.Name,
-			Namespace:           b.ObjectMeta.Namespace,
-			ScheduleName:        b.ObjectMeta.GetLabels()["velero.io/schedule-name"],
-			ExcludedNamespaces:  b.Spec.ExcludedNamespaces,
-			StorageLocation:     b.Spec.StorageLocation,
-			SnapshotVolumes:     b.Spec.SnapshotVolumes,
-			TTL:                 b.Spec.TTL,
+		veleroBackup := inventory.NewVeleroBackup()
+		veleroBackup.ObjectMeta = inventory.NewObjectMeta(b.ObjectMeta)
+		veleroBackup.Spec = inventory.VeleroBackupSpec{
+			ScheduleName:       b.ObjectMeta.GetLabels()["velero.io/schedule-name"],
+			ExcludedNamespaces: b.Spec.ExcludedNamespaces,
+			StorageLocation:    b.Spec.StorageLocation,
+			SnapshotVolumes:    b.Spec.SnapshotVolumes,
+			TTL:                b.Spec.TTL,
+		}
+		veleroBackup.Status = inventory.VeleroBackupStatus{
 			StartTimestamp:      b.Status.StartTimestamp,
 			CompletionTimestamp: b.Status.CompletionTimestamp,
 			Expiration:          b.Status.Expiration,
@@ -68,16 +70,19 @@ func CollectVeleroSchedules(cs *ck.Clientset) ([]*inventory.VeleroSchedule, erro
 	}
 
 	for _, s := range schedules.Items {
-		veleroSchedule := &inventory.VeleroSchedule{
-			Name:               s.ObjectMeta.Name,
-			Namespace:          s.ObjectMeta.Namespace,
+		veleroSchedule := inventory.NewVeleroSchedule()
+		veleroSchedule.ObjectMeta = inventory.NewObjectMeta(s.ObjectMeta)
+		veleroSchedule.Spec = inventory.VeleroScheduleSpec{
 			Schedule:           s.Spec.Schedule,
 			ExcludedNamespaces: s.Spec.Template.ExcludedNamespaces,
 			SnapshotVolumes:    s.Spec.Template.SnapshotVolumes,
 			TTL:                s.Spec.Template.TTL,
-			LastBackup:         s.Status.LastBackup,
-			Phase:              string(s.Status.Phase),
 		}
+		veleroSchedule.Status = inventory.VeleroScheduleStatus{
+			LastBackup: s.Status.LastBackup,
+			Phase:      string(s.Status.Phase),
+		}
+
 		veleroSchedules = append(veleroSchedules, veleroSchedule)
 	}
 	return veleroSchedules, nil

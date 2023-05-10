@@ -27,16 +27,11 @@ func CollectStorageClasses(cs *ck.Clientset) ([]*inventory.StorageClass, error) 
 }
 
 func CollectStorageClass(o storagev1.StorageClass) *inventory.StorageClass {
-	sc := inventory.NewStorageClass()
-	sc.Name = o.Name
-	sc.CreationTimestamp = o.CreationTimestamp
-	sc.Provisioner = o.Provisioner
+	r := inventory.NewStorageClass()
 
-	sc.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		sc.Labels = labels
-	}
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 
-	return sc
+	r.Provisioner = o.Provisioner
+
+	return r
 }

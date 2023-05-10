@@ -1,8 +1,12 @@
 package collect
 
 import (
+	"context"
 	"strconv"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ck "k8s.io/client-go/kubernetes"
 )
 
 func parseHorrorBool(val string) bool {
@@ -53,4 +57,27 @@ func parseRomanNumeral(roman string) int {
 		return (next - first) + parseRomanNumeral(roman[2:])
 	}
 	return first + parseRomanNumeral(roman[1:])
+}
+
+func readConfigMapsByLabel(cs *ck.Clientset, ns string, label string) (data []map[string]string, err error) {
+	data = make([]map[string]string, 0)
+	res, err := cs.CoreV1().
+		ConfigMaps(ns).
+		List(context.TODO(), metav1.ListOptions{LabelSelector: label})
+	if err != nil {
+		return data, err
+	}
+	for i := range res.Items {
+		data = append(data, res.Items[i].Data)
+	}
+	return data, nil
+}
+
+func appendError(dst []error, errs ...error) []error {
+	for _, e := range errs {
+		if e != nil {
+			dst = append(dst, e)
+		}
+	}
+	return dst
 }

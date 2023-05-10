@@ -28,24 +28,24 @@ func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.ReplicaSet, error) {
 }
 
 func CollectReplicaSet(o v1.ReplicaSet) *inventory.ReplicaSet {
-	rs := inventory.NewReplicaSet()
-	rs.Name = o.Name
-	rs.Namespace = o.Namespace
-	rs.CreationTimestamp = o.CreationTimestamp
-	rs.Replicas = o.Spec.Replicas
+	r := inventory.NewReplicaSet()
 
-	if len(o.OwnerReferences) > 0 {
-		rs.OwnerKind = o.OwnerReferences[0].Kind
-		rs.OwnerName = o.OwnerReferences[0].Name
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.ReplicaSetSpec{
+		Replicas: o.Spec.Replicas,
+		Template: &inventory.PodTemplate{
+			Containers:     getContainerInfoFromContainers(o.Spec.Template.Spec.Containers),
+			InitContainers: getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers),
+		},
 	}
 
-	rs.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		rs.Labels = labels
+	r.Status = inventory.ReplicaSetStatus{
+		Replicas:             o.Status.Replicas,
+		FullyLabeledReplicas: o.Status.FullyLabeledReplicas,
+		ReadyReplicas:        o.Status.ReadyReplicas,
+		AvailableReplicas:    o.Status.AvailableReplicas,
 	}
-	rs.Template.Containers = getContainerInfoFromContainers(o.Spec.Template.Spec.Containers)
-	rs.Template.InitContainers = getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers)
 
-	return rs
+	return r
 }

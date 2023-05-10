@@ -26,13 +26,9 @@ func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) (errors []error
 }
 
 func CollectNamespace(o v1.Namespace) (*inventory.Namespace, error) {
-	ns := inventory.NewNamespace()
-	ns.Name = o.Name
-	ns.CreationTimestamp = o.CreationTimestamp
-	ns.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		ns.Labels = labels
-	}
-	return ns, nil
+	r := inventory.NewNamespace()
+
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	return r, nil
 }

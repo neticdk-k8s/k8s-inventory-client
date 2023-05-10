@@ -28,20 +28,26 @@ func CollectDeployments(cs *ck.Clientset) ([]*inventory.Deployment, error) {
 }
 
 func CollectDeployment(o v1.Deployment) *inventory.Deployment {
-	d := inventory.NewDeployment()
-	d.Name = o.Name
-	d.Namespace = o.Namespace
-	d.CreationTimestamp = o.CreationTimestamp
-	d.Replicas = o.Spec.Replicas
-	d.Strategy = string(o.Spec.Strategy.Type)
+	r := inventory.NewDeployment()
 
-	d.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		d.Labels = labels
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.DeploymentSpec{
+		Strategy: string(o.Spec.Strategy.Type),
+		Replicas: o.Spec.Replicas,
+		Template: &inventory.PodTemplate{
+			Containers:     getContainerInfoFromContainers(o.Spec.Template.Spec.Containers),
+			InitContainers: getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers),
+		},
 	}
-	d.Template.Containers = getContainerInfoFromContainers(o.Spec.Template.Spec.Containers)
-	d.Template.InitContainers = getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers)
 
-	return d
+	r.Status = inventory.DeploymentStatus{
+		Replicas:            o.Status.Replicas,
+		ReadyReplicas:       o.Status.ReadyReplicas,
+		UpdatedReplicas:     o.Status.UpdatedReplicas,
+		AvailableReplicas:   o.Status.AvailableReplicas,
+		UnavailableReplicas: o.Status.UnavailableReplicas,
+	}
+
+	return r
 }

@@ -2,7 +2,6 @@ package collect
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,8 +11,6 @@ import (
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	kubernetes "github.com/neticdk-k8s/k8s-inventory-client/kubernetes"
 	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ck "k8s.io/client-go/kubernetes"
 )
 
 // How often to collect
@@ -150,37 +147,4 @@ func (c *InventoryCollection) handleErrors(errs []error) {
 	for _, e := range errs {
 		log.Error(e)
 	}
-}
-
-func filterAnnotations(src metav1.Object) (a map[string]string) {
-	a = src.GetAnnotations()
-	if len(a) > 0 {
-		delete(a, "kubectl.kubernetes.io/last-applied-configuration")
-	} else {
-		a = make(map[string]string)
-	}
-	return a
-}
-
-func readConfigMapsByLabel(cs *ck.Clientset, ns string, label string) (data []map[string]string, err error) {
-	data = make([]map[string]string, 0)
-	res, err := cs.CoreV1().
-		ConfigMaps(ns).
-		List(context.TODO(), metav1.ListOptions{LabelSelector: label})
-	if err != nil {
-		return data, err
-	}
-	for i := range res.Items {
-		data = append(data, res.Items[i].Data)
-	}
-	return data, nil
-}
-
-func appendError(dst []error, errs ...error) []error {
-	for _, e := range errs {
-		if e != nil {
-			dst = append(dst, e)
-		}
-	}
-	return dst
 }

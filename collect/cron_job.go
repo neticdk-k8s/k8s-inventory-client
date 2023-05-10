@@ -68,37 +68,46 @@ func CollectCronJob(cj *inventory.CronJob, o interface{}) *inventory.CronJob {
 }
 
 func CollectCronJobV1(o v1.CronJob) *inventory.CronJob {
-	cj := inventory.NewCronJob()
-	cj.Name = o.Name
-	cj.Namespace = o.Namespace
-	cj.CreationTimestamp = o.CreationTimestamp
-	cj.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		cj.Labels = labels
-	}
-	cj.Schedule = o.Spec.Schedule
-	cj.ConcurrencyPolicy = string(o.Spec.ConcurrencyPolicy)
+	r := inventory.NewCronJob()
 
-	cj.Template.Containers = getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.Containers)
-	cj.Template.InitContainers = getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.InitContainers)
-	return cj
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.CronJobSpec{
+		Schedule:          o.Spec.Schedule,
+		ConcurrencyPolicy: string(o.Spec.ConcurrencyPolicy),
+		JobTemplate: &inventory.PodTemplate{
+			Containers:     getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.Containers),
+			InitContainers: getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.InitContainers),
+		},
+	}
+
+	r.Status = inventory.CronJobStatus{
+		LastScheduleTime:   o.Status.LastScheduleTime,
+		LastSuccessfulTime: o.Status.LastSuccessfulTime,
+	}
+
+	return r
 }
 
 func CollectCronJobV1Beta1(o v1beta1.CronJob) *inventory.CronJob {
-	cj := inventory.NewCronJob()
-	cj.Name = o.Name
-	cj.Namespace = o.Namespace
-	cj.CreationTimestamp = o.CreationTimestamp
-	cj.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		cj.Labels = labels
-	}
-	cj.Schedule = o.Spec.Schedule
-	cj.ConcurrencyPolicy = string(o.Spec.ConcurrencyPolicy)
+	r := inventory.NewCronJob()
+	r.APIVersion = "v1beta1"
 
-	cj.Template.Containers = getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.Containers)
-	cj.Template.InitContainers = getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.InitContainers)
-	return cj
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.CronJobSpec{
+		Schedule:          o.Spec.Schedule,
+		ConcurrencyPolicy: string(o.Spec.ConcurrencyPolicy),
+		JobTemplate: &inventory.PodTemplate{
+			Containers:     getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.Containers),
+			InitContainers: getContainerInfoFromContainers(o.Spec.JobTemplate.Spec.Template.Spec.InitContainers),
+		},
+	}
+
+	r.Status = inventory.CronJobStatus{
+		LastScheduleTime:   o.Status.LastScheduleTime,
+		LastSuccessfulTime: o.Status.LastSuccessfulTime,
+	}
+
+	return r
 }

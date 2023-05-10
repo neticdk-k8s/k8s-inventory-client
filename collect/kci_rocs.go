@@ -27,18 +27,19 @@ func CollectKCIRocksDBInstances(cs *ck.Clientset) ([]*inventory.KCIRocksDBInstan
 }
 
 func CollectKCIRocksDBInstance(o dboperatorapi.DbInstance) *inventory.KCIRocksDBInstance {
-	dbi := inventory.NewKCIRocksDBInstance()
-	dbi.Name = o.Name
-	dbi.CreationTimestamp = o.CreationTimestamp
-	dbi.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		dbi.Labels = labels
-	}
-	dbi.Engine = o.Spec.Engine
-	dbi.Host = o.Spec.Generic.Host
-	dbi.Port = o.Spec.Generic.Port
-	dbi.Status = o.Status.Phase
+	r := inventory.NewKCIRocksDBInstance()
 
-	return dbi
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.KCIRocksDBInstanceSpec{
+		Engine: o.Spec.Engine,
+		Host:   o.Spec.Generic.Host,
+		Port:   o.Spec.Generic.Port,
+	}
+
+	r.Status = inventory.KCIRocksDBInstanceStatus{
+		Phase: o.Status.Phase,
+	}
+
+	return r
 }

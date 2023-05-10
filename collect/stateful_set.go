@@ -28,20 +28,27 @@ func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.StatefulSet, error) {
 }
 
 func CollectStatefulSet(o v1.StatefulSet) *inventory.StatefulSet {
-	ss := inventory.NewStatefulSet()
-	ss.Name = o.Name
-	ss.Namespace = o.Namespace
-	ss.CreationTimestamp = o.CreationTimestamp
-	ss.Replicas = o.Spec.Replicas
-	ss.UpdateStrategy = string(o.Spec.UpdateStrategy.Type)
+	r := inventory.NewStatefulSet()
 
-	ss.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		ss.Labels = labels
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.StatefulSetSpec{
+		Replicas:    o.Spec.Replicas,
+		ServiceName: o.Spec.ServiceName,
+		Template: &inventory.PodTemplate{
+			Containers:     getContainerInfoFromContainers(o.Spec.Template.Spec.Containers),
+			InitContainers: getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers),
+		},
+		UpdateStrategy: string(o.Spec.UpdateStrategy.Type),
 	}
-	ss.Template.Containers = getContainerInfoFromContainers(o.Spec.Template.Spec.Containers)
-	ss.Template.InitContainers = getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers)
 
-	return ss
+	r.Status = inventory.StatefulSetStatus{
+		Replicas:          o.Status.Replicas,
+		ReadyReplicas:     o.Status.ReadyReplicas,
+		CurrentReplicas:   o.Status.CurrentReplicas,
+		UpdatedReplicas:   o.Status.UpdatedReplicas,
+		AvailableReplicas: o.Status.AvailableReplicas,
+	}
+
+	return r
 }

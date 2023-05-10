@@ -50,7 +50,7 @@ func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) (errors []
 	if i.CustomResources.HasCalico {
 		calico, err := CollectCalico(cs)
 		errors = appendError(errors, err)
-		i.CustomResources.Calico = calico
+		i.CustomResources.CalicoCluster = calico
 	}
 	return
 }

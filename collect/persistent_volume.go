@@ -11,10 +11,10 @@ import (
 	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 )
 
-func CollectPVs(cs *ck.Clientset) ([]*inventory.PV, error) {
+func CollectPVs(cs *ck.Clientset) ([]*inventory.PersistentVolume, error) {
 	var err error
 
-	pvs := make([]*inventory.PV, 0)
+	pvs := make([]*inventory.PersistentVolume, 0)
 	pvList, err := cs.CoreV1().
 		PersistentVolumes().
 		List(context.Background(), metav1.ListOptions{})
@@ -27,23 +27,25 @@ func CollectPVs(cs *ck.Clientset) ([]*inventory.PV, error) {
 	return pvs, nil
 }
 
-func CollectPV(o v1.PersistentVolume) *inventory.PV {
-	pv := inventory.NewPV()
-	pv.Name = o.Name
-	pv.CreationTimestamp = o.CreationTimestamp
-	pv.StorageClass = o.Spec.StorageClassName
-	pv.Claim = fmt.Sprintf("%s/%s/%s", o.Spec.ClaimRef.Namespace, o.Spec.ClaimRef.Kind, o.Spec.ClaimRef.Name)
-	pv.Status = string(o.Status.Phase)
-	pv.AccessModes = helper.GetAccessModesAsString(o.Spec.AccessModes)
-	pv.VolumeMode = string(*o.Spec.VolumeMode)
-	pv.Capacity = o.Spec.Capacity.Storage().Value()
-	pv.SetPersistentVolumeSource(o)
+func CollectPV(o v1.PersistentVolume) *inventory.PersistentVolume {
+	r := inventory.NewPersistentVolume()
 
-	pv.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		pv.Labels = labels
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.PersistentVolumeSpec{
+		Capacity:         o.Spec.Capacity.Storage().Value(),
+		AccessModes:      helper.GetAccessModesAsString(o.Spec.AccessModes),
+		Claim:            fmt.Sprintf("%s/%s/%s", o.Spec.ClaimRef.Namespace, o.Spec.ClaimRef.Kind, o.Spec.ClaimRef.Name),
+		StorageClassName: o.Spec.StorageClassName,
+		VolumeMode:       string(*o.Spec.VolumeMode),
 	}
 
-	return pv
+	r.Status = inventory.PersistentVolumeStatus{
+		Phase:   string(o.Status.Phase),
+		Message: o.Status.Message,
+	}
+
+	r.SetPersistentVolumeSource(o)
+
+	return r
 }

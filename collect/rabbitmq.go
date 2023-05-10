@@ -27,15 +27,13 @@ func CollectRabbitMQClusters(cs *ck.Clientset) ([]*inventory.RabbitMQCluster, er
 }
 
 func CollectRabbitMQCluster(o rmqapi.RabbitmqCluster) *inventory.RabbitMQCluster {
-	c := inventory.NewRabbitMQCluster()
-	c.Name = o.Name
-	c.Namespace = o.Namespace
-	c.CreationTimestamp = o.CreationTimestamp
-	c.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		c.Labels = labels
+	r := inventory.NewRabbitMQCluster()
+
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.RabbitMQClusterSpec{
+		Replicas: o.Spec.Replicas,
+		Image:    o.Spec.Image,
 	}
-	c.Image = o.Spec.Image
-	return c
+	return r
 }

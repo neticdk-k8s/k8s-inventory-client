@@ -23,5 +23,8 @@ func CollectWorkloads(cs *ck.Clientset, i *inventory.Inventory) (errors []error)
 		errors = appendError(errors, e)
 	}
 	i.Workloads.CronJobs = cron_jobs
+	jobs, err := CollectJobs(cs)
+	errors = appendError(errors, err)
+	i.Workloads.Jobs = jobs
 	return
 }

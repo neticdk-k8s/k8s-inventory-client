@@ -28,34 +28,42 @@ func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
 }
 
 func CollectNode(o v1.Node) (*inventory.Node, error) {
-	n := inventory.NewNode()
+	r := inventory.NewNode()
 
 	labels := o.GetLabels()
 
 	criName, criVersion := parseContainerRuntimeVersion(o.Status.NodeInfo.ContainerRuntimeVersion)
 
-	n.Name = o.GetName()
-	n.Annotations = filterAnnotations(&o)
-	if len(labels) > 0 {
-		n.Labels = labels
-	}
-	n.Role = strings.Join(rolesFromNodeLabels(labels), ",")
-	n.KubeProxyVersion = o.Status.NodeInfo.KubeProxyVersion
-	n.KubeletVersion = o.Status.NodeInfo.KubeletVersion
-	n.KernelVersion = o.Status.NodeInfo.KernelVersion
-	n.CRIName = criName
-	n.CRIVersion = criVersion
-	n.ContainerRuntimeVersion = o.Status.NodeInfo.ContainerRuntimeVersion
-	n.IsControlPlane = (n.Role != "worker")
-	n.Provider = providerNameFromProviderID(o.Spec.ProviderID)
-	n.TopologyRegion = regionFromNodeLabels(labels)
-	n.TopologyZone = zoneFromNodeLabels(labels)
-	n.CPUCapacityMillis = o.Status.Capacity.Cpu().MilliValue()
-	n.CPUAllocatableMillis = o.Status.Allocatable.Cpu().MilliValue()
-	n.MemoryCapacityBytes = o.Status.Capacity.Memory().Value()
-	n.MemoryAllocatableBytes = o.Status.Allocatable.Memory().Value()
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 
-	return n, nil
+	r.Spec = inventory.NodeSpec{
+		PodCIDRs:      o.Spec.PodCIDRs,
+		ProviderID:    o.Spec.ProviderID,
+		Unschedulable: o.Spec.Unschedulable,
+		Taints:        o.Spec.Taints,
+	}
+
+	r.Status = inventory.NodeStatus{
+		NodeInfo: o.Status.NodeInfo,
+	}
+
+	r.Role = strings.Join(rolesFromNodeLabels(labels), ",")
+	r.KubeProxyVersion = o.Status.NodeInfo.KubeProxyVersion
+	r.KubeletVersion = o.Status.NodeInfo.KubeletVersion
+	r.KernelVersion = o.Status.NodeInfo.KernelVersion
+	r.CRIName = criName
+	r.CRIVersion = criVersion
+	r.ContainerRuntimeVersion = o.Status.NodeInfo.ContainerRuntimeVersion
+	r.IsControlPlane = (r.Role != "worker")
+	r.Provider = providerNameFromProviderID(o.Spec.ProviderID)
+	r.TopologyRegion = regionFromNodeLabels(labels)
+	r.TopologyZone = zoneFromNodeLabels(labels)
+	r.CPUCapacityMillis = o.Status.Capacity.Cpu().MilliValue()
+	r.CPUAllocatableMillis = o.Status.Allocatable.Cpu().MilliValue()
+	r.MemoryCapacityBytes = o.Status.Capacity.Memory().Value()
+	r.MemoryAllocatableBytes = o.Status.Allocatable.Memory().Value()
+
+	return r, nil
 }
 
 func regionFromNodeLabels(nodeLabels map[string]string) string {

@@ -7,8 +7,8 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCalico(cs *ck.Clientset) (*inventory.Calico, error) {
-	calico := inventory.NewCalico()
+func CollectCalico(cs *ck.Clientset) (*inventory.CalicoClusterInformation, error) {
+	r := inventory.NewCalicoClusterInformation()
 
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/crd.projectcalico.org/v1/clusterinformations/default")
 	if err != nil {
@@ -23,13 +23,11 @@ func CollectCalico(cs *ck.Clientset) (*inventory.Calico, error) {
 		return nil, err
 	}
 
-	calico.CreationTimestamp = o.CreationTimestamp
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		calico.Labels = labels
+	r.Spec = inventory.CalicoClusterInformationSpec{
+		Version: o.Spec.CalicoVersion,
 	}
-	calico.Version = o.Spec.CalicoVersion
 
-	return calico, nil
+	return r, nil
 }

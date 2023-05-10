@@ -28,19 +28,23 @@ func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.DaemonSet, error) {
 }
 
 func CollectDaemonSet(o v1.DaemonSet) *inventory.DaemonSet {
-	ds := inventory.NewDaemonSet()
-	ds.Name = o.Name
-	ds.Namespace = o.Namespace
-	ds.CreationTimestamp = o.CreationTimestamp
-	ds.UpdateStrategy = string(o.Spec.UpdateStrategy.Type)
+	r := inventory.NewDaemonSet()
 
-	ds.Annotations = filterAnnotations(&o)
-	labels := o.GetLabels()
-	if len(labels) > 0 {
-		ds.Labels = labels
+	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
+
+	r.Spec = inventory.DaemonSetSpec{
+		UpdateStrategy: string(o.Spec.UpdateStrategy.Type),
+		Template: &inventory.PodTemplate{
+			Containers:     getContainerInfoFromContainers(o.Spec.Template.Spec.Containers),
+			InitContainers: getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers),
+		},
 	}
-	ds.Template.Containers = getContainerInfoFromContainers(o.Spec.Template.Spec.Containers)
-	ds.Template.InitContainers = getContainerInfoFromContainers(o.Spec.Template.Spec.InitContainers)
 
-	return ds
+	r.Status = inventory.DaemonSetStatus{
+		CurrentNumberScheduled: o.Status.CurrentNumberScheduled,
+		NumberMisscheduled:     o.Status.NumberMisscheduled,
+		DesiredNumberScheduled: o.Status.DesiredNumberScheduled,
+	}
+
+	return r
 }
