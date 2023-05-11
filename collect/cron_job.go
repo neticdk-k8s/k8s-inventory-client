@@ -13,8 +13,8 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCronJobs(cs *ck.Clientset) (cjs []*inventory.CronJob, errors []error) {
-	cjs = make([]*inventory.CronJob, 0)
+func CollectCronJobs(cs *ck.Clientset) (cjs []*inventory.Workload, errors []error) {
+	cjs = make([]*inventory.Workload, 0)
 	v1Jobs, err := CollectCronJobsV1(cs)
 	errors = appendError(errors, err)
 	cjs = append(cjs, v1Jobs...)
@@ -24,8 +24,8 @@ func CollectCronJobs(cs *ck.Clientset) (cjs []*inventory.CronJob, errors []error
 	return
 }
 
-func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.CronJob, error) {
-	cjs := make([]*inventory.CronJob, 0)
+func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.Workload, error) {
+	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1beta1().
 		CronJobs("").
 		List(context.Background(), metav1.ListOptions{})
@@ -40,8 +40,8 @@ func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.CronJob, error) {
 	return cjs, nil
 }
 
-func CollectCronJobsV1(cs *ck.Clientset) ([]*inventory.CronJob, error) {
-	cjs := make([]*inventory.CronJob, 0)
+func CollectCronJobsV1(cs *ck.Clientset) ([]*inventory.Workload, error) {
+	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1().
 		CronJobs("").
 		List(context.Background(), metav1.ListOptions{})
@@ -55,7 +55,7 @@ func CollectCronJobsV1(cs *ck.Clientset) ([]*inventory.CronJob, error) {
 	return cjs, nil
 }
 
-func CollectCronJob(cj *inventory.CronJob, o interface{}) *inventory.CronJob {
+func CollectCronJob(cj *inventory.Workload, o interface{}) *inventory.Workload {
 	switch obj := o.(type) {
 	case v1beta1.CronJob:
 		return CollectCronJobV1Beta1(obj)
@@ -67,7 +67,7 @@ func CollectCronJob(cj *inventory.CronJob, o interface{}) *inventory.CronJob {
 	return cj
 }
 
-func CollectCronJobV1(o v1.CronJob) *inventory.CronJob {
+func CollectCronJobV1(o v1.CronJob) *inventory.Workload {
 	r := inventory.NewCronJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -89,7 +89,7 @@ func CollectCronJobV1(o v1.CronJob) *inventory.CronJob {
 	return r
 }
 
-func CollectCronJobV1Beta1(o v1beta1.CronJob) *inventory.CronJob {
+func CollectCronJobV1Beta1(o v1beta1.CronJob) *inventory.Workload {
 	r := inventory.NewCronJob()
 	r.APIVersion = "v1beta1"
 

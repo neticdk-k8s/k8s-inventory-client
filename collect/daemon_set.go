@@ -10,10 +10,10 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.DaemonSet, error) {
+func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	var err error
 
-	dsets := make([]*inventory.DaemonSet, 0)
+	dsets := make([]*inventory.Workload, 0)
 
 	daemonSetList, err := cs.AppsV1().
 		DaemonSets("").
@@ -27,7 +27,7 @@ func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.DaemonSet, error) {
 	return dsets, nil
 }
 
-func CollectDaemonSet(o v1.DaemonSet) *inventory.DaemonSet {
+func CollectDaemonSet(o v1.DaemonSet) *inventory.Workload {
 	r := inventory.NewDaemonSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

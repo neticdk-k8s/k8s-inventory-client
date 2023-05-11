@@ -10,10 +10,10 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.ReplicaSet, error) {
+func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	var err error
 
-	rsets := make([]*inventory.ReplicaSet, 0)
+	rsets := make([]*inventory.Workload, 0)
 
 	replicaSetList, err := cs.AppsV1().
 		ReplicaSets("").
@@ -27,7 +27,7 @@ func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.ReplicaSet, error) {
 	return rsets, nil
 }
 
-func CollectReplicaSet(o v1.ReplicaSet) *inventory.ReplicaSet {
+func CollectReplicaSet(o v1.ReplicaSet) *inventory.Workload {
 	r := inventory.NewReplicaSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

@@ -11,10 +11,10 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectDeployments(cs *ck.Clientset) ([]*inventory.Deployment, error) {
+func CollectDeployments(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	var err error
 
-	deployments := make([]*inventory.Deployment, 0)
+	deployments := make([]*inventory.Workload, 0)
 	deploymentList, err := cs.AppsV1().
 		Deployments("").
 		List(context.Background(), metav1.ListOptions{})
@@ -27,7 +27,7 @@ func CollectDeployments(cs *ck.Clientset) ([]*inventory.Deployment, error) {
 	return deployments, nil
 }
 
-func CollectDeployment(o v1.Deployment) *inventory.Deployment {
+func CollectDeployment(o v1.Deployment) *inventory.Workload {
 	r := inventory.NewDeployment()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

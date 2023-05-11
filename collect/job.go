@@ -11,10 +11,10 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectJobs(cs *ck.Clientset) ([]*inventory.Job, error) {
+func CollectJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	var err error
 
-	jobs := make([]*inventory.Job, 0)
+	jobs := make([]*inventory.Workload, 0)
 	jobList, err := cs.BatchV1().
 		Jobs("").
 		List(context.Background(), metav1.ListOptions{})
@@ -27,7 +27,7 @@ func CollectJobs(cs *ck.Clientset) ([]*inventory.Job, error) {
 	return jobs, nil
 }
 
-func CollectJob(o v1.Job) *inventory.Job {
+func CollectJob(o v1.Job) *inventory.Workload {
 	r := inventory.NewJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

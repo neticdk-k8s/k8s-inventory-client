@@ -10,10 +10,10 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.StatefulSet, error) {
+func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	var err error
 
-	ssets := make([]*inventory.StatefulSet, 0)
+	ssets := make([]*inventory.Workload, 0)
 
 	statefulSetList, err := cs.AppsV1().
 		StatefulSets("").
@@ -27,7 +27,7 @@ func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.StatefulSet, error) {
 	return ssets, nil
 }
 
-func CollectStatefulSet(o v1.StatefulSet) *inventory.StatefulSet {
+func CollectStatefulSet(o v1.StatefulSet) *inventory.Workload {
 	r := inventory.NewStatefulSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
