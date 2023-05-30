@@ -35,9 +35,14 @@ func CollectPV(o v1.PersistentVolume) *inventory.PersistentVolume {
 	r.Spec = inventory.PersistentVolumeSpec{
 		Capacity:         o.Spec.Capacity.Storage().Value(),
 		AccessModes:      helper.GetAccessModesAsString(o.Spec.AccessModes),
-		Claim:            fmt.Sprintf("%s/%s/%s", o.Spec.ClaimRef.Namespace, o.Spec.ClaimRef.Kind, o.Spec.ClaimRef.Name),
 		StorageClassName: o.Spec.StorageClassName,
 		VolumeMode:       string(*o.Spec.VolumeMode),
+	}
+	if o.Spec.Capacity != nil {
+		r.Spec.Capacity = o.Spec.Capacity.Storage().Value()
+	}
+	if o.Spec.ClaimRef != nil {
+		r.Spec.Claim = fmt.Sprintf("%s/%s/%s", o.Spec.ClaimRef.Namespace, o.Spec.ClaimRef.Kind, o.Spec.ClaimRef.Name)
 	}
 
 	r.Status = inventory.PersistentVolumeStatus{
