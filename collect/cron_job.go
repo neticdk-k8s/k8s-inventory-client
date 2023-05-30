@@ -18,9 +18,11 @@ func CollectCronJobs(cs *ck.Clientset) (cjs []*inventory.Workload, errors []erro
 	v1Jobs, err := CollectCronJobsV1(cs)
 	errors = appendError(errors, err)
 	cjs = append(cjs, v1Jobs...)
-	v1BetaJobs, err := CollectCronJobsV1beta1(cs)
-	errors = appendError(errors, err)
-	cjs = append(cjs, v1BetaJobs...)
+	if len(cjs) == 0 {
+		v1BetaJobs, err := CollectCronJobsV1beta1(cs)
+		errors = appendError(errors, err)
+		cjs = append(cjs, v1BetaJobs...)
+	}
 	return
 }
 
@@ -33,8 +35,7 @@ func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.Workload, error) {
 		return nil, fmt.Errorf("getting CronJobs/v1beta1: %v", err)
 	}
 	for _, o := range cronJobList.Items {
-		cj := inventory.NewCronJob()
-		CollectCronJob(cj, o)
+		cj := CollectCronJob(inventory.NewCronJob(), o)
 		cjs = append(cjs, cj)
 	}
 	return cjs, nil
