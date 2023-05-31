@@ -116,6 +116,7 @@ func (c *InventoryCollection) Upload() {
 		log.Error(err)
 		return
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(res.Body)
