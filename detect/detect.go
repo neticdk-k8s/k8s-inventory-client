@@ -84,23 +84,41 @@ func DetectInfrastructureProvider(cs *ck.Clientset, kubernetesProvider string) s
 
 func detectAWS(client *http.Client) bool {
 	resp, err := client.Get("http://169.254.169.254/latest/")
-	return err == nil && resp.StatusCode == http.StatusOK
+	if err != nil {
+		return false
+	}
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	return resp.StatusCode == http.StatusOK
 }
 
 func detectAzure(client *http.Client) bool {
 	resp, err := client.Get("http://169.254.169.254/metadata/v1/InstanceInfo")
-	return err == nil && resp.StatusCode == http.StatusOK
+	if err != nil {
+		return false
+	}
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	return resp.StatusCode == http.StatusOK
 }
 
 func detectGCP(client *http.Client) bool {
-	r, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/tags", nil)
+	resp, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/tags", nil)
 	if err != nil {
 		return false
 	}
-	r.Header.Add("Metadata-Flavor", "Google")
-	resp, err := client.Do(r)
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	resp.Header.Add("Metadata-Flavor", "Google")
+	resp2, err := client.Do(resp)
 	if err != nil {
 		return false
 	}
-	return resp.StatusCode == http.StatusOK
+	if resp2.Body != nil {
+		defer resp2.Body.Close()
+	}
+	return resp2.StatusCode == http.StatusOK
 }
