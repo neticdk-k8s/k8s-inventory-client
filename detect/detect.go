@@ -8,7 +8,7 @@ import (
 	"time"
 
 	detector "github.com/rancher/kubernetes-provider-detector"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
 )
@@ -22,7 +22,7 @@ type infProviders struct {
 func DetectKubernetesProvider(cs *ck.Clientset) string {
 	provider, err := detector.DetectProvider(context.TODO(), cs)
 	if err != nil {
-		log.Info("Could not detect cluster provider")
+		log.Info().Msg("Could not detect cluster provider")
 		provider = "undetected"
 	}
 	return provider
@@ -65,7 +65,7 @@ func DetectInfrastructureProvider(cs *ck.Clientset, kubernetesProvider string) s
 		return "gcp"
 	}
 
-	log.Infof("Collecting node information to detect additional cluster information")
+	log.Debug().Msg("Collecting node information to detect additional cluster information")
 	if nodes, err := cs.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err == nil {
 		for p := range nodes.Items {
 			node := nodes.Items[p]

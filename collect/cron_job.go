@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/batch/v1"
 	v1beta1 "k8s.io/api/batch/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -63,7 +63,7 @@ func CollectCronJob(cj *inventory.Workload, o interface{}) *inventory.Workload {
 	case v1.CronJob:
 		return CollectCronJobV1(obj)
 	default:
-		log.Warningf("api/resource: %v not supported", obj)
+		log.Warn().Msgf("api/resource: %v not supported", obj)
 	}
 	return cj
 }

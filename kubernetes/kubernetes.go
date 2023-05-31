@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	ck "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
@@ -16,21 +16,18 @@ import (
 func CreateK8SClient(impersonate string) (*ck.Clientset, error) {
 	var err error
 	var conf *restclient.Config
-	log.Info("Configuring k8s client using in-cluster config")
 	conf, err = restclient.InClusterConfig()
 	if err != nil {
-		log.Info("Could not load in-cluster config")
-		log.Debug(err)
-		log.Info("Trying out-of-cluster config")
+		log.Debug().Err(err).Msg("")
+		log.Info().Msg("using out-of-cluster config")
 		conf, err = clientcmd.BuildConfigFromFlags("", os.Getenv("HOME")+"/.kube/config")
 		if err != nil {
-			log.Error(err)
-			return nil, fmt.Errorf("creating k8s client: %v", err)
+			return nil, err
 		}
 	}
-	log.Info("K8s client configured")
+	log.Info().Msg("using in-cluster config")
 	if impersonate != "" {
-		log.Infof("Setting up impersonation as user: %v", impersonate)
+		log.Info().Str("user", impersonate).Msg("impersonating as user")
 		conf.Impersonate = restclient.ImpersonationConfig{UserName: impersonate}
 	}
 
@@ -52,7 +49,7 @@ func GetK8SRESTResource(cs *ck.Clientset, path string) (res restclient.Result, f
 	if statusCode == http.StatusOK {
 		found = true
 	} else if statusCode == http.StatusNotFound {
-		log.Infof("No %v resources found", path)
+		log.Info().Msgf("No %v resources found", path)
 	} else {
 		err = fmt.Errorf("expected %v, got %v", http.StatusOK, statusCode)
 	}

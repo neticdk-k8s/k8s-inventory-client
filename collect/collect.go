@@ -10,7 +10,8 @@ import (
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	kubernetes "github.com/neticdk-k8s/k8s-inventory-client/kubernetes"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // How often to collect
@@ -36,97 +37,96 @@ func NewInventoryCollection(collectionInterval string, uploadInventory string, i
 func (c *InventoryCollection) Collect() {
 	r, err := time.ParseDuration(c.CollectionInterval)
 	if err != nil {
-		log.Warnf("parsing refresh interval: %v. Using default: %v",
-			err, DefaultCollectionInterval)
+		log.Warn().Err(err).Str("interval", c.CollectionInterval).Msg("parsing refresh interval")
 		r, err = time.ParseDuration(DefaultCollectionInterval)
 		if err != nil {
-			log.Fatalf("parsing refresh interval: %v", err)
+			log.Fatal().Err(err).Str("interval", DefaultCollectionInterval).Msg("parsing refresh interval")
 		}
 	}
 
 	sleepNext := func() {
 		t := time.Now().Add(r)
-		log.Infof("Next iteration in %v at %v", r, t.Local().Format("2006-01-02 15:04:05"))
+		log.Info().Msgf("next iteration in %v at %v", r, t.Local().Format("2006-01-02 15:04:05"))
 		time.Sleep(r)
-
 	}
 
-	log.Infof("Entering inventory collection loop")
+	log.Info().Msg("entering inventory collection loop")
 	for {
 		c.Inventory = inventory.NewInventory()
 		c.Inventory.CollectionSucceeded = true
 		cs, err := kubernetes.CreateK8SClient(c.Impersonate)
 		if err != nil {
-			log.Errorf("creating clientset: %v", err)
+			log.Error().Err(err).Msg("creating clientset")
 			c.Inventory.CollectionSucceeded = false
 			sleepNext()
 			continue
 		}
 
-		log.Infof("Collecting cluster information")
+		log.Debug().Str("collect", "cluster").Msg("")
 		c.handleErrors(CollectCluster(cs, c.Inventory))
 
-		log.Infof("Collecting Secure Cloud Stack information")
+		log.Debug().Str("collect", "scs").Msg("")
 		c.handleErrors(CollectSCSMetadata(cs, c.Inventory))
 		c.handleErrors(CollectSCSTenants(cs, c.Inventory))
 
-		log.Infof("Collecting namespace information")
+		log.Debug().Str("collect", "namespace").Msg("")
 		c.handleErrors(CollectNamespaces(cs, c.Inventory))
 
-		log.Infof("Collecting node information")
+		log.Debug().Str("collect", "node").Msg("")
 		c.handleErrors(CollectNodes(cs, c.Inventory))
 
-		log.Infof("Collecting storage information")
+		log.Debug().Str("collect", "storage").Msg("")
 		c.handleErrors(CollectStorage(cs, c.Inventory))
 
-		log.Infof("Collecting custom resources information")
+		log.Debug().Str("collect", "components").Msg("")
 		c.handleErrors(CollectCustomResources(cs, c.Inventory))
 
-		log.Infof("Collecting workload information")
+		log.Debug().Str("collect", "workload").Msg("")
 		c.handleErrors(CollectWorkloads(cs, c.Inventory))
 
 		if c.UploadInventory {
-			c.Upload()
+			if err := c.Upload(); err != nil {
+				log.Error().Stack().Err(err).Msg("uplading inventory")
+			}
 		}
 
 		sleepNext()
 	}
 }
 
-func (c *InventoryCollection) Upload() {
-	log.Infof("Uploading inventory")
+func (c *InventoryCollection) Upload() error {
+	log.Info().Msg("uploading inventory")
 
 	payload, err := json.Marshal(c.Inventory)
 	if err != nil {
-		log.Error(err)
-		return
+		return errors.Wrap(err, "marshaling inventory")
 	}
 
 	req, err := http.NewRequest("PUT", c.ServerAPIEndpoint, bytes.NewBuffer(payload))
 	if err != nil {
-		log.Error(err)
-		return
+		return errors.Wrap(err, "creating request")
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		log.Error(err)
-		return
+		return errors.Wrap(err, "sending request")
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(res.Body)
-		log.WithFields(log.Fields{
-			"status": res.StatusCode,
-			"body":   string(body),
-		}).Error("upload failed")
-		return
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Error().Err(err).Int("status", res.StatusCode).Msg("reading response")
+			return errors.Wrap(err, "reading response")
+		}
+		log.Error().Int("status", res.StatusCode).Str("body", string(body)).Msg("upload failed")
 	}
 
-	log.Infof("Uploaded inventory for: %s (%d)", c.Inventory.Cluster.Name, res.StatusCode)
+	log.Info().Str("fqdn", c.Inventory.Cluster.Name).Int("status", res.StatusCode).Msg("uploaded inventory")
+
+	return nil
 }
 
 func (c *InventoryCollection) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -145,6 +145,6 @@ func (c *InventoryCollection) handleErrors(errs []error) {
 		c.Inventory.CollectionSucceeded = false
 	}
 	for _, e := range errs {
-		log.Error(e)
+		log.Error().Stack().Err(e).Msg("")
 	}
 }

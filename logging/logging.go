@@ -3,29 +3,24 @@ package logging
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/onrik/logrus/filename"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/pkgerrors"
 )
 
 func InitLogger(logLevel string, logFormatter string) {
-	logLevels := map[string]log.Level{
-		"panic": log.PanicLevel,
-		"fatal": log.FatalLevel,
-		"error": log.ErrorLevel,
-		"warn":  log.WarnLevel,
-		"info":  log.InfoLevel,
-		"debug": log.DebugLevel,
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+	logLevels := map[string]zerolog.Level{
+		"panic": zerolog.PanicLevel,
+		"fatal": zerolog.FatalLevel,
+		"error": zerolog.ErrorLevel,
+		"warn":  zerolog.WarnLevel,
+		"info":  zerolog.InfoLevel,
+		"debug": zerolog.DebugLevel,
 	}
-	log.SetLevel(logLevels[logLevel])
-	log.AddHook(filename.NewHook())
+	zerolog.SetGlobalLevel(logLevels[logLevel])
 	if logFormatter == "text" {
-		customFormatter := new(log.TextFormatter)
-		customFormatter.FullTimestamp = true
-		customFormatter.TimestampFormat = "2006-01-02 15:04:05"
-		log.SetFormatter(customFormatter)
-	} else {
-		log.SetFormatter(new(log.JSONFormatter))
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
-	log.SetOutput(os.Stdout)
 }

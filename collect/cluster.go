@@ -6,7 +6,7 @@ import (
 	"github.com/Masterminds/semver"
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	"github.com/neticdk-k8s/k8s-inventory-client/detect"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	ck "k8s.io/client-go/kubernetes"
 )
 
@@ -40,7 +40,7 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) (errors []erro
 	}
 
 	if len(metaDataConfigMaps) < 1 {
-		log.Warnf("no ConfigMap with label %s found", "netic.dk/owned-by=operator")
+		log.Warn().Str("label", "netic.dk/owned-by=operator").Msg("ConfigMap with label matching not found")
 		return nil
 	}
 
@@ -86,7 +86,7 @@ func CollectSCSTenants(cs *ck.Clientset, i *inventory.Inventory) (errors []error
 	}
 
 	if len(tenantDataConfigMaps) < 1 {
-		log.Warnf("no ConfigMap with label %s found", "netic.dk/owned-by=tenant")
+		log.Warn().Str("label", "netic.dk/owned-by=tenant").Msg("ConfigMap with label matching not found")
 		return nil
 	}
 

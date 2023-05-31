@@ -2,11 +2,12 @@ package main
 
 import (
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 
 	"github.com/neticdk-k8s/k8s-inventory-client/collect"
 	"github.com/neticdk-k8s/k8s-inventory-client/logging"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -27,21 +28,22 @@ func main() {
 	logFormatter := getDefaultValue("LOG_FORMATTER", "json")
 	logging.InitLogger(logLevel, logFormatter)
 
-	log.Infof("Starting k8s-inventory-client, version: %s, commit: %s", VERSION, COMMIT)
+	log.Info().Str("version", VERSION).Str("commit", COMMIT).Msg("starting k8s-inventory-client")
 
 	collectionInterval := getDefaultValue("COLLECT_INTERVAL", collect.DefaultCollectionInterval)
 	uploadInventory := getDefaultValue("UPLOAD_INVENTORY", "true")
 	impersonate := getDefaultValue("IMPERSONATE", "")
 	serverAPIEndpoint := getDefaultValue("SERVER_API_ENDPOINT", "http://localhost:8086")
 	collection := collect.NewInventoryCollection(collectionInterval, uploadInventory, impersonate, serverAPIEndpoint)
+
 	go collection.Collect()
 
 	http.Handle("/api/v1/inventory", collection)
 
 	port := getDefaultValue("HTTP_PORT", "8087")
-	log.Infof("Serving on port %v", port)
+	log.Info().Str("port", port).Msg("starting server")
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
-		log.Fatalf("An error occured: %s", err)
+		log.Fatal().Err(err).Msg("")
 	}
 }
