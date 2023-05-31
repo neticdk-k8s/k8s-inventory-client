@@ -121,7 +121,8 @@ func (c *InventoryCollection) Upload() error {
 			log.Error().Err(err).Int("status", res.StatusCode).Msg("reading response")
 			return errors.Wrap(err, "reading response")
 		}
-		log.Error().Int("status", res.StatusCode).Str("body", string(body)).Msg("upload failed")
+		log.Error().Int("status", res.StatusCode).Str("body", string(body)).Msg("")
+		return errors.New("upload failed")
 	}
 
 	log.Info().Str("fqdn", c.Inventory.Cluster.Name).Int("status", res.StatusCode).Msg("uploaded inventory")
