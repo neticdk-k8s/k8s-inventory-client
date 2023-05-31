@@ -29,7 +29,7 @@ func NewInventoryCollection(collectionInterval string, uploadInventory string, i
 		CollectionInterval: collectionInterval,
 		UploadInventory:    uploadInventory == "true",
 		Impersonate:        impersonate,
-		ServerAPIEndpoint:  serverAPIEndpoint,
+		ServerAPIEndpoint:  fmt.Sprintf("%s/api/v1/inventory", serverAPIEndpoint),
 	}
 }
 
@@ -95,7 +95,6 @@ func (c *InventoryCollection) Collect() {
 
 func (c *InventoryCollection) Upload() {
 	log.Infof("Uploading inventory")
-	serverAPIEndpoint := fmt.Sprintf("%s/api/v1/inventory", c.ServerAPIEndpoint)
 
 	payload, err := json.Marshal(c.Inventory)
 	if err != nil {
@@ -103,7 +102,7 @@ func (c *InventoryCollection) Upload() {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", serverAPIEndpoint, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("PUT", c.ServerAPIEndpoint, bytes.NewBuffer(payload))
 	if err != nil {
 		log.Error(err)
 		return
