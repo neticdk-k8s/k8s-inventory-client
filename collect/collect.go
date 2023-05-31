@@ -26,7 +26,6 @@ type InventoryCollection struct {
 
 func NewInventoryCollection(collectionInterval string, uploadInventory string, impersonate string, serverAPIEndpoint string) *InventoryCollection {
 	return &InventoryCollection{
-		Inventory:          inventory.NewInventory(),
 		CollectionInterval: collectionInterval,
 		UploadInventory:    uploadInventory == "true",
 		Impersonate:        impersonate,
@@ -54,6 +53,7 @@ func (c *InventoryCollection) Collect() {
 
 	log.Infof("Entering inventory collection loop")
 	for {
+		c.Inventory = inventory.NewInventory()
 		c.Inventory.CollectionSucceeded = true
 		cs, err := kubernetes.CreateK8SClient(c.Impersonate)
 		if err != nil {
