@@ -56,6 +56,7 @@ func CollectVeleroBackups(cs *ck.Clientset) ([]*inventory.VeleroBackup, error) {
 
 func CollectVeleroSchedules(cs *ck.Clientset) ([]*inventory.VeleroSchedule, error) {
 	veleroSchedules := make([]*inventory.VeleroSchedule, 0)
+
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/velero.io/v1/schedules")
 	if err != nil {
 		return nil, err

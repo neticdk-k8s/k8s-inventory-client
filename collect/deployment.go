@@ -12,8 +12,6 @@ import (
 )
 
 func CollectDeployments(cs *ck.Clientset) ([]*inventory.Workload, error) {
-	var err error
-
 	deployments := make([]*inventory.Workload, 0)
 	deploymentList, err := cs.AppsV1().
 		Deployments("").

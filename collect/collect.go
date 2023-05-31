@@ -63,26 +63,26 @@ func (c *InventoryCollection) Collect() {
 		}
 
 		log.Debug().Str("collect", "cluster").Msg("")
-		c.handleErrors(CollectCluster(cs, c.Inventory))
+		c.handleError(CollectCluster(cs, c.Inventory))
 
 		log.Debug().Str("collect", "scs").Msg("")
-		c.handleErrors(CollectSCSMetadata(cs, c.Inventory))
-		c.handleErrors(CollectSCSTenants(cs, c.Inventory))
+		c.handleError(CollectSCSMetadata(cs, c.Inventory))
+		c.handleError(CollectSCSTenants(cs, c.Inventory))
 
 		log.Debug().Str("collect", "namespace").Msg("")
-		c.handleErrors(CollectNamespaces(cs, c.Inventory))
+		c.handleError(CollectNamespaces(cs, c.Inventory))
 
 		log.Debug().Str("collect", "node").Msg("")
-		c.handleErrors(CollectNodes(cs, c.Inventory))
+		c.handleError(CollectNodes(cs, c.Inventory))
 
 		log.Debug().Str("collect", "storage").Msg("")
-		c.handleErrors(CollectStorage(cs, c.Inventory))
+		c.handleError(CollectStorage(cs, c.Inventory))
 
 		log.Debug().Str("collect", "components").Msg("")
-		c.handleErrors(CollectCustomResources(cs, c.Inventory))
+		c.handleError(CollectCustomResources(cs, c.Inventory))
 
 		log.Debug().Str("collect", "workload").Msg("")
-		c.handleErrors(CollectWorkloads(cs, c.Inventory))
+		c.handleError(CollectWorkloads(cs, c.Inventory))
 
 		if c.UploadInventory {
 			if err := c.Upload(); err != nil {
@@ -141,11 +141,9 @@ func (c *InventoryCollection) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (c *InventoryCollection) handleErrors(errs []error) {
-	if len(errs) > 0 {
+func (c *InventoryCollection) handleError(err error) {
+	if err != nil {
 		c.Inventory.CollectionSucceeded = false
-	}
-	for _, e := range errs {
-		log.Error().Stack().Err(e).Msg("")
+		log.Error().Stack().Err(err).Msg("")
 	}
 }

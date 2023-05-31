@@ -11,8 +11,6 @@ import (
 )
 
 func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
-	var err error
-
 	ssets := make([]*inventory.Workload, 0)
 
 	statefulSetList, err := cs.AppsV1().

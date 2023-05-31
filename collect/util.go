@@ -72,12 +72,3 @@ func readConfigMapsByLabel(cs *ck.Clientset, ns string, label string) (data []ma
 	}
 	return data, nil
 }
-
-func appendError(dst []error, errs ...error) []error {
-	for _, e := range errs {
-		if e != nil {
-			dst = append(dst, e)
-		}
-	}
-	return dst
-}

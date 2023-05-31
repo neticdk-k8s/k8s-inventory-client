@@ -12,8 +12,6 @@ import (
 )
 
 func CollectPVs(cs *ck.Clientset) ([]*inventory.PersistentVolume, error) {
-	var err error
-
 	pvs := make([]*inventory.PersistentVolume, 0)
 	pvList, err := cs.CoreV1().
 		PersistentVolumes().

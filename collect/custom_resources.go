@@ -1,11 +1,15 @@
 package collect
 
 import (
+	"errors"
+
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
+func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) error {
+	var errs []error
+
 	resourceMap := make(map[string]bool)
 
 	_, rl, err := cs.Discovery().ServerGroupsAndResources()
@@ -16,7 +20,7 @@ func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) (errors []
 	}
 
 	if err != nil {
-		errors = append(errors, err)
+		errs = append(errs, err)
 	} else {
 		i.CustomResources.HasVelero = resourceMap["velero.io/v1/backups"]
 		i.CustomResources.HasKCIRocks = resourceMap["kci.rocks/v1alpha1/dbinstances"]
@@ -31,26 +35,27 @@ func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) (errors []
 
 	if i.CustomResources.HasVelero {
 		velero_backups, err := CollectVeleroBackups(cs)
-		errors = appendError(errors, err)
+		errs = append(errs, err)
 		i.CustomResources.Velero.Backups = velero_backups
 		velero_schedules, err := CollectVeleroSchedules(cs)
-		errors = appendError(errors, err)
+		errs = append(errs, err)
 		i.CustomResources.Velero.Schedules = velero_schedules
 	}
 	if i.CustomResources.HasKCIRocks {
 		kcirocks_db_instances, err := CollectKCIRocksDBInstances(cs)
-		errors = appendError(errors, err)
+		errs = append(errs, err)
 		i.CustomResources.KCIRocks.DBInstances = kcirocks_db_instances
 	}
 	if i.CustomResources.HasRabbitMQ {
 		rabbitmq_clusters, err := CollectRabbitMQClusters(cs)
-		errors = appendError(errors, err)
+		errs = append(errs, err)
 		i.CustomResources.RabbitMQ.Clusters = rabbitmq_clusters
 	}
 	if i.CustomResources.HasCalico {
 		calico, err := CollectCalico(cs)
-		errors = appendError(errors, err)
+		errs = append(errs, err)
 		i.CustomResources.CalicoCluster = calico
 	}
-	return
+
+	return errors.Join(errs...)
 }

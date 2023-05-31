@@ -12,8 +12,6 @@ import (
 )
 
 func CollectJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
-	var err error
-
 	jobs := make([]*inventory.Workload, 0)
 	jobList, err := cs.BatchV1().
 		Jobs("").

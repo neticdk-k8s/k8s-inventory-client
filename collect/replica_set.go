@@ -11,8 +11,6 @@ import (
 )
 
 func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
-	var err error
-
 	rsets := make([]*inventory.Workload, 0)
 
 	replicaSetList, err := cs.AppsV1().

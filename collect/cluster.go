@@ -10,10 +10,10 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCluster(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
+func CollectCluster(cs *ck.Clientset, i *inventory.Inventory) error {
 	v, err := cs.Discovery().ServerVersion()
 	if err != nil {
-		return []error{fmt.Errorf("getting server version: %v", err)}
+		return fmt.Errorf("getting server version: %v", err)
 	}
 
 	semVer, _ := semver.NewVersion(v.String())
@@ -29,14 +29,13 @@ func CollectCluster(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
 		i.Cluster.KubernetesProvider = "kind"
 	}
 
-	return
+	return nil
 }
 
-func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
+func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
 	metaDataConfigMaps, err := readConfigMapsByLabel(cs, "netic-metadata-system", "netic.dk/owned-by=operator")
-
 	if err != nil {
-		return []error{err}
+		return err
 	}
 
 	if len(metaDataConfigMaps) < 1 {
@@ -75,14 +74,13 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) (errors []erro
 		i.Cluster.FQDN = fmt.Sprintf("%s.%s.%s.k8s.netic.dk", i.Cluster.Name, i.Cluster.ProviderName, i.Cluster.ClusterType)
 	}
 
-	return
+	return nil
 }
 
-func CollectSCSTenants(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
+func CollectSCSTenants(cs *ck.Clientset, i *inventory.Inventory) error {
 	tenantDataConfigMaps, err := readConfigMapsByLabel(cs, "netic-metadata-system", "netic.dk/owned-by=tenant")
-
 	if err != nil {
-		return []error{err}
+		return err
 	}
 
 	if len(tenantDataConfigMaps) < 1 {
@@ -103,5 +101,5 @@ func CollectSCSTenants(cs *ck.Clientset, i *inventory.Inventory) (errors []error
 		i.Tenants = append(i.Tenants, tenant)
 	}
 
-	return
+	return nil
 }

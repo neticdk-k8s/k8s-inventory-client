@@ -11,8 +11,6 @@ import (
 )
 
 func CollectStorageClasses(cs *ck.Clientset) ([]*inventory.StorageClass, error) {
-	var err error
-
 	sclss := make([]*inventory.StorageClass, 0)
 	scList, err := cs.StorageV1().
 		StorageClasses().
@@ -28,10 +26,7 @@ func CollectStorageClasses(cs *ck.Clientset) ([]*inventory.StorageClass, error) 
 
 func CollectStorageClass(o storagev1.StorageClass) *inventory.StorageClass {
 	r := inventory.NewStorageClass()
-
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
-
 	r.Provisioner = o.Provisioner
-
 	return r
 }

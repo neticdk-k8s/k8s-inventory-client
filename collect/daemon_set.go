@@ -11,8 +11,6 @@ import (
 )
 
 func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
-	var err error
-
 	dsets := make([]*inventory.Workload, 0)
 
 	daemonSetList, err := cs.AppsV1().

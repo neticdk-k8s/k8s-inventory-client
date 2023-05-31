@@ -2,6 +2,7 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -12,19 +13,20 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) (errors []error) {
+func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) error {
 	nl := make([]*inventory.Node, 0)
 	nodes, err := cs.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return []error{fmt.Errorf("getting nodes: %v", err)}
+		return fmt.Errorf("getting nodes: %v", err)
 	}
+	var errs []error
 	for _, o := range nodes.Items {
 		node, err := CollectNode(o)
-		errors = appendError(errors, err)
+		errs = append(errs, err)
 		nl = append(nl, node)
 	}
 	i.Nodes = nl
-	return
+	return errors.Join(errs...)
 }
 
 func CollectNode(o v1.Node) (*inventory.Node, error) {

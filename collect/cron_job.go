@@ -2,6 +2,7 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
@@ -13,17 +14,19 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCronJobs(cs *ck.Clientset) (cjs []*inventory.Workload, errors []error) {
-	cjs = make([]*inventory.Workload, 0)
-	v1Jobs, err := CollectCronJobsV1(cs)
-	errors = appendError(errors, err)
+func CollectCronJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
+	cjs := make([]*inventory.Workload, 0)
+	v1Jobs, v1Err := CollectCronJobsV1(cs)
 	cjs = append(cjs, v1Jobs...)
+	var (
+		v1BetaErr  error
+		v1BetaJobs []*inventory.Workload
+	)
 	if len(cjs) == 0 {
-		v1BetaJobs, err := CollectCronJobsV1beta1(cs)
-		errors = appendError(errors, err)
+		v1BetaJobs, v1BetaErr = CollectCronJobsV1beta1(cs)
 		cjs = append(cjs, v1BetaJobs...)
 	}
-	return
+	return cjs, errors.Join(v1Err, v1BetaErr)
 }
 
 func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.Workload, error) {
