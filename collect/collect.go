@@ -46,7 +46,7 @@ func (c *InventoryCollection) Collect() {
 
 	sleepNext := func() {
 		t := time.Now().Add(r)
-		log.Info().Msgf("next iteration in %v at %v", r, t.Local().Format("2006-01-02 15:04:05"))
+		log.Info().Msgf("next iteration in %v at %v", r, t.Local().Format(time.DateTime))
 		time.Sleep(r)
 	}
 
@@ -58,6 +58,7 @@ func (c *InventoryCollection) Collect() {
 		if err != nil {
 			log.Error().Err(err).Msg("creating clientset")
 			c.Inventory.CollectionSucceeded = false
+			c.Inventory.CollectionErrors = append(c.Inventory.CollectionErrors, err.Error())
 			sleepNext()
 			continue
 		}
@@ -144,6 +145,7 @@ func (c *InventoryCollection) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 func (c *InventoryCollection) handleError(err error) {
 	if err != nil {
 		c.Inventory.CollectionSucceeded = false
+		c.Inventory.CollectionErrors = append(c.Inventory.CollectionErrors, err.Error())
 		log.Error().Stack().Err(err).Msg("")
 	}
 }
