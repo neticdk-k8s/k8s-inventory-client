@@ -6,13 +6,9 @@ import (
 	"os"
 
 	"github.com/neticdk-k8s/k8s-inventory-client/collect"
+	"github.com/neticdk-k8s/k8s-inventory-client/collect/version"
 	"github.com/neticdk-k8s/k8s-inventory-client/logging"
 	"github.com/rs/zerolog/log"
-)
-
-var (
-	VERSION = "dev"
-	COMMIT  = "HEAD"
 )
 
 func getDefaultValue(envVar, def string) string {
@@ -28,7 +24,7 @@ func main() {
 	logFormatter := getDefaultValue("LOG_FORMATTER", "json")
 	logging.InitLogger(logLevel, logFormatter)
 
-	log.Info().Str("version", VERSION).Str("commit", COMMIT).Msg("starting k8s-inventory-client")
+	log.Info().Str("version", version.VERSION).Str("commit", version.COMMIT).Msg("starting k8s-inventory-client")
 
 	collectionInterval := getDefaultValue("COLLECT_INTERVAL", collect.DefaultCollectionInterval)
 	uploadInventory := getDefaultValue("UPLOAD_INVENTORY", "true")

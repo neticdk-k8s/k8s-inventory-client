@@ -46,7 +46,7 @@ build: clean fmt lint | $(BIN)
 		-v \
 		-a \
 		-tags release \
-		-ldflags '-s -w -X main.VERSION=$(VERSION) -X main.COMMIT=$(COMMIT)'
+		-ldflags '-s -w -X ${MODULEPATH}/collect/version.VERSION=$(VERSION) -X ${MODULEPATH}/collect/version.COMMIT=$(COMMIT)'
 
 # Runs go build
 .PHONY: build2
@@ -55,13 +55,13 @@ build2: clean fmt | $(BIN)
 	CGO_ENABLED=0 go build -o $(BIN)/k8s-inventory-client \
 		-v \
 		-tags release \
-		-ldflags '-s -w -X main.VERSION=$(VERSION) -X main.COMMIT=$(COMMIT)'
+		-ldflags '-s -w -X ${MODULEPATH}/collect/version.VERSION=$(VERSION) -X ${MODULEPATH}collect/version.COMMIT=$(COMMIT)'
 
 # Build docker client
 .PHONY: docker-build
 docker-build:
 	@echo "Building k8s-inventory-client image..."
-	DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
+	DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache --build-arg MODULEPATH=${MODULEPATH} --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) -t neticdk-k8s/k8s-inventory-client -f dist/Dockerfile.client .
 
 # Tag and push docker client
 .PHONY: docker-push

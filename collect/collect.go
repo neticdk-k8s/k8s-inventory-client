@@ -9,6 +9,7 @@ import (
 	"time"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
+	"github.com/neticdk-k8s/k8s-inventory-client/collect/version"
 	kubernetes "github.com/neticdk-k8s/k8s-inventory-client/kubernetes"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -54,6 +55,8 @@ func (c *InventoryCollection) Collect() {
 	for {
 		c.Inventory = inventory.NewInventory()
 		c.Inventory.CollectionSucceeded = true
+		c.Inventory.ClientVersion = version.VERSION
+		c.Inventory.ClientCommit = version.COMMIT
 		cs, err := kubernetes.CreateK8SClient(c.Impersonate)
 		if err != nil {
 			log.Error().Err(err).Msg("creating clientset")
