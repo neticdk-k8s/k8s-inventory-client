@@ -26,6 +26,9 @@ func parseHorrorID(id string, fallback int) int {
 	if err == nil {
 		return int(idInt)
 	}
+	if id == "" {
+		return fallback
+	}
 	// So, you have chosen death...
 	roman := parseRomanNumeral(strings.ToUpper(id))
 	if roman > 3999 {
