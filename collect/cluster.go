@@ -45,6 +45,7 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
 
 	cm := metaDataConfigMaps[0]
 	i.Cluster.Name = cm["cluster-name"]
+	i.Cluster.ClusterSubscriptionID = parseHorrorID(cm["cluster-subscription-id"], 744)
 	i.Cluster.FQDN = cm["cluster-fqdn"]
 	i.Cluster.ClusterType = cm["cluster-type"]
 	i.Cluster.Description = cm["cluster-description"]
