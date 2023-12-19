@@ -24,7 +24,7 @@ RUN --mount=target= \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /out/k8s-inventory-client \
     -tags release \
-    -ldflags "-s -w -X github.com/netic-k8s/k8s-inventory-client/collect/version.VERSION=${VERSION} -X github.com/netic-k8s/k8s-inventory-client/collect/version.COMMIT=${COMMIT}"
+    -ldflags "-s -w -X github.com/neticdk-k8s/k8s-inventory-client/collect/version.VERSION=${VERSION} -X github.com/neticdk-k8s/k8s-inventory-client/collect/version.COMMIT=${COMMIT}"
 
 FROM scratch AS bin-unix
 COPY --from=builder /etc/passwd /etc/passwd
