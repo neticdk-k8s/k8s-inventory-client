@@ -1,7 +1,7 @@
 package collect
 
 import (
-	dboperatorapi "github.com/kloeckner-i/db-operator/api/v1beta1"
+	dboperatorapi "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	"github.com/neticdk-k8s/k8s-inventory-client/kubernetes"
 	ck "k8s.io/client-go/kubernetes"
