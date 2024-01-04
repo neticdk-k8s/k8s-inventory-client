@@ -2,6 +2,7 @@ package collect
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/Masterminds/semver"
 	inventory "github.com/neticdk-k8s/k8s-inventory"
@@ -45,7 +46,7 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
 
 	cm := metaDataConfigMaps[0]
 	i.Cluster.Name = cm["cluster-name"]
-	i.Cluster.ClusterSubscriptionID = parseHorrorID(cm["cluster-subscription-id"], 744)
+	i.Cluster.ClusterSubscriptionID = strconv.Itoa(parseHorrorID(cm["cluster-subscription-id"], 744))
 	i.Cluster.FQDN = cm["cluster-fqdn"]
 	i.Cluster.ClusterType = cm["cluster-type"]
 	i.Cluster.Description = cm["cluster-description"]
@@ -56,9 +57,9 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
 		i.Cluster.EnvironmentName = "NA"
 	}
 	i.Cluster.OperatorName = cm["operator-name"]
-	i.Cluster.OperatorSubscriptionID = parseHorrorID(cm["operator-subscription-id"], 744)
+	i.Cluster.OperatorSubscriptionID = strconv.Itoa(parseHorrorID(cm["operator-subscription-id"], 744))
 	i.Cluster.ProviderName = cm["provider-name"]
-	i.Cluster.ProviderSubscriptionID = parseHorrorID(cm["provider-subscription-id"], 744)
+	i.Cluster.ProviderSubscriptionID = strconv.Itoa(parseHorrorID(cm["provider-subscription-id"], 744))
 	i.Cluster.CustomerName = cm["customer-name"]
 	i.Cluster.CustomerID = parseHorrorID(cm["customer-id"], 744)
 	i.Cluster.BillingSubject = cm["billing-subject"]
@@ -95,7 +96,7 @@ func CollectSCSTenants(cs *ck.Clientset, i *inventory.Inventory) error {
 		tenant.Name = tenantDataConfigMaps[n]["tenant-name"]
 		tenant.Namespace = tenantDataConfigMaps[n]["tenant-ns"]
 		tenant.BusinessUnitID = tenantDataConfigMaps[n]["business-unit-id"]
-		tenant.SubscriptionID = parseHorrorID(tenantDataConfigMaps[n]["tenant-subscription-id"], 744)
+		tenant.SubscriptionID = strconv.Itoa(parseHorrorID(tenantDataConfigMaps[n]["tenant-subscription-id"], 744))
 		tenant.HasApplicationOperations = parseHorrorBool(tenantDataConfigMaps[n]["has-application-operations"])
 		tenant.HasApplicationManagement = parseHorrorBool(tenantDataConfigMaps[n]["has-application-management"])
 		tenant.HasCapacityManagement = parseHorrorBool(tenantDataConfigMaps[n]["has-capacity-management"])
