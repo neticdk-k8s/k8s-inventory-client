@@ -71,7 +71,6 @@ func (c *InventoryCollection) Collect() {
 
 		log.Debug().Str("collect", "scs").Msg("")
 		c.handleError(CollectSCSMetadata(cs, c.Inventory))
-		c.handleError(CollectSCSTenants(cs, c.Inventory))
 
 		log.Debug().Str("collect", "namespace").Msg("")
 		c.handleError(CollectNamespaces(cs, c.Inventory))

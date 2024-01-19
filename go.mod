@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/kloeckner-i/db-operator v1.10.0
-	github.com/neticdk-k8s/k8s-inventory v0.2.7
+	github.com/neticdk-k8s/k8s-inventory v0.2.9
 	github.com/pkg/errors v0.9.1
 	github.com/projectcalico/api v0.0.0-20230222223746-44aa60c2201f
 	github.com/rabbitmq/cluster-operator v1.14.0
