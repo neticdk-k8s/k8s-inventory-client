@@ -14,3 +14,4 @@ metadata:
 data:
   provider-name: myprovider
   cluster-name: prod999
+  cluster-fqdn: prod999.myprovider.k8s.netic.dk

@@ -38,6 +38,7 @@ func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
 	}
 
 	i.Cluster.Name = cm.Data["cluster-name"]
+	i.Cluster.FQDN = cm.Data["cluster-fqdn"]
 	i.Cluster.ProviderName = cm.Data["provider-name"]
 
 	return nil
