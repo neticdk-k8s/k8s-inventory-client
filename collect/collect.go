@@ -221,11 +221,11 @@ func (c *InventoryCollection) Upload() error {
 	}
 
 	if c.AuthEnabled {
-		jwt, err := c.Signer.Sign(payload)
+		jws, err := c.Signer.Sign(payload)
 		if err != nil {
 			return errors.Wrap(err, "signing inventory")
 		}
-		payload = []byte(jwt.FullSerialize())
+		payload = []byte(jws.FullSerialize())
 		contentType = "application/jose+json"
 	}
 
