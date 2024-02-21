@@ -3,19 +3,18 @@
 [![ci](https://github.com/neticdk-k8s/k8s-inventory-client/actions/workflows/main.yml/badge.svg)](https://github.com/neticdk-k8s/k8s-inventory-client/actions/workflows/main.yml)
 [![tag](https://img.shields.io/github/tag/neticdk-k8s/k8s-inventory-client.svg)](https://github.com/neticdk-k8s/k8s-inventory-client/tags/)
 
-
 Kubernetes application that collects, exposes and optionally uploads inventory
 data.
 
 It runs in a loop every `COLLECT_INTERNAL` and collects:
 
-* Cluster information (versions, etc)
-* Workload information (deployments, etc)
-* Infrastructure information (cloud, region, zone, etc)
-* Node information
-* Storage information
-* Secure Cloud Stack specific information (customer data, etc)
-* Custom Resource information (CNI, specific operators)
+- Cluster information (versions, etc)
+- Workload information (deployments, etc)
+- Infrastructure information (cloud, region, zone, etc)
+- Node information
+- Storage information
+- Secure Cloud Stack specific information (customer data, etc)
+- Custom Resource information (CNI, specific operators)
 
 For more information about what is collected, see
 [k8s-inventory](https://github.com/neticdk-k8s/k8s-inventory).
@@ -44,8 +43,8 @@ Secure Cloud Stack Information is read from `ConfigMap`-objects.
 
 These objects must be created in the `netic-metadata-system` `Namespace`:
 
-* General cluster information uses the first `ConfigMap` matching the `netic.dk/owned-by=operator` label
-* Tenant information uses all `ConfigMap`s matching the `netic.dk/owned-by=tenant` label
+- General cluster information uses the first `ConfigMap` matching the `netic.dk/owned-by=operator` label
+- Tenant information uses all `ConfigMap`s matching the `netic.dk/owned-by=tenant` label
 
 See [`dist/deployment/netic-metadata.yaml`](dist/deployment/netic-metadata.yaml) for examples.
 
@@ -59,40 +58,42 @@ for a list of permissions.
 
 Configuration is done using environment variables:
 
-| Variable Name         | Description                    | Default |
-| :-------------------- | :----------------------------  | ------: |
-| `HTTP_PORT`           | HTTP port to listen on         |    8087 |
-| `COLLECT_INTERNAL`    | How often to collect           |      1h |
-| `LOG_LEVEL`           | Logging level                  |    info |
-| `LOG_FORMATTER`       | Log output formatter           |    json |
-| `UPLOAD_INVENTORY`    | Upload inventory               |    true |
-| `SERVER_API_ENDPOINT` | HTTP URL to upload data to     | http://localhost:8086/api/v1/inventory |
-| `IMPERSONATE`         | Kubernetes role to imporsonate |         |
+| Variable Name         | Description                                    |                                Default |
+| :-------------------- | :--------------------------------------------- | -------------------------------------: |
+| `HTTP_PORT`           | HTTP port to listen on                         |                                   8087 |
+| `COLLECT_INTERNAL`    | How often to collect                           |                                     1h |
+| `LOG_LEVEL`           | Logging level                                  |                                   info |
+| `LOG_FORMATTER`       | Log output formatter                           |                                   json |
+| `UPLOAD_INVENTORY`    | Upload inventory                               |                                   true |
+| `SERVER_API_ENDPOINT` | HTTP URL to upload data to                     | http://localhost:8086/api/v1/inventory |
+| `AUTH_ENABLED`        | Enable/disable authentication                  |                                   true |
+| `TLS_CRT`             | PEM Certificate file to use for authentication |              /etc/certificates/tls.crt |
+| `TLS_KEY`             | PEM KEY file to use for authentication         |              /etc/certificates/tls.key |
+| `SERVER_API_ENDPOINT` | HTTP URL to upload data to                     | http://localhost:8086/api/v1/inventory |
+| `IMPERSONATE`         | Kubernetes role to imporsonate                 |                                        |
 
 ### Collection Intervals
 
 `COLLECT_INTERNAL` takes a values that can be parsed by
 [`time.ParseDuration()`](https://pkg.go.dev/time#Duration).
 
-
 ### Log Formatter
 
 `LOG_FORMATTER` can be set to one of:
 
-* json
-* text
-
+- json
+- text
 
 ### Log Level
 
 `LOG_LEVEL` can be set to one of:
 
-* debug
-* info
-* warn
-* error
-* fatal
-* panic
+- debug
+- info
+- warn
+- error
+- fatal
+- panic
 
 ## Deploying
 
@@ -100,13 +101,13 @@ If you use a Secure Cloud Stack cluster, chances are k8s-inventory-client is alr
 
 However, if you need to deploy it yourself, you will need to:
 
-* Create the `ConfigMap`s mentioned above
-* Create the Kubernetes resources:
-    * ServiceAccount
-    * ClusterRole
-    * ClusterRoleBinding
-    * Service
-    * Deployment
+- Create the `ConfigMap`s mentioned above
+- Create the Kubernetes resources:
+  - ServiceAccount
+  - ClusterRole
+  - ClusterRoleBinding
+  - Service
+  - Deployment
 
 See [`kustomization.yaml`](dist/deployment/kustomization.yaml) for a full example of deploying the client.
 
@@ -116,10 +117,10 @@ See [`kustomization.yaml`](dist/deployment/kustomization.yaml) for a full exampl
 
 Typical adjustments:
 
-* Set the `app.kubernetes.io/version` label to match the image version
-* Set the image tag to the version you want to deploy
-* In the `Deployment` set environment variables accordingly
-* If using another port, set the `Service` ports
+- Set the `app.kubernetes.io/version` label to match the image version
+- Set the image tag to the version you want to deploy
+- In the `Deployment` set environment variables accordingly
+- If using another port, set the `Service` ports
 
 ## Building
 

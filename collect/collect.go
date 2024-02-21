@@ -2,17 +2,23 @@ package collect
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	"github.com/neticdk-k8s/k8s-inventory-client/collect/version"
+	"github.com/neticdk-k8s/k8s-inventory-client/config"
 	kubernetes "github.com/neticdk-k8s/k8s-inventory-client/kubernetes"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	jose "gopkg.in/go-jose/go-jose.v2"
 )
 
 // How often to collect
@@ -24,15 +30,118 @@ type InventoryCollection struct {
 	UploadInventory    bool
 	Impersonate        string
 	ServerAPIEndpoint  string
+	TLSCrt             string
+	TLSKey             string
+	AuthEnabled        bool
+	Signer             jose.Signer
 }
 
-func NewInventoryCollection(collectionInterval string, uploadInventory string, impersonate string, serverAPIEndpoint string) *InventoryCollection {
-	return &InventoryCollection{
-		CollectionInterval: collectionInterval,
-		UploadInventory:    uploadInventory == "true",
-		Impersonate:        impersonate,
-		ServerAPIEndpoint:  fmt.Sprintf("%s/api/v1/inventory", serverAPIEndpoint),
+func NewInventoryCollection(cfg config.Config) *InventoryCollection {
+	i := &InventoryCollection{
+		CollectionInterval: cfg.CollectionInterval,
+		UploadInventory:    cfg.UploadInventory,
+		Impersonate:        cfg.Impersonate,
+		ServerAPIEndpoint:  fmt.Sprintf("%s/api/v1/inventory", cfg.ServerAPIEndpoint),
+		TLSCrt:             cfg.TLSCrt,
+		TLSKey:             cfg.TLSKey,
+		AuthEnabled:        cfg.AuthEnabled,
 	}
+	if !i.AuthEnabled {
+		log.Info().Msg("Authentication disabled")
+		return i
+	}
+	if i.TLSCrt == "" {
+		log.Info().Msg("No TLSCrt set. Authentication disabled")
+		i.AuthEnabled = false
+		return i
+	}
+	if i.TLSKey == "" {
+		log.Error().Msg("No TLSKey set. Authentication disbaled.")
+		i.AuthEnabled = false
+		return i
+	}
+	if _, err := os.Stat(filepath.Clean(i.TLSCrt)); errors.Is(err, os.ErrNotExist) {
+		log.Error().Msgf("TLSCrt file '%s' not found. Authentication disbaled.", i.TLSCrt)
+		i.AuthEnabled = false
+		return i
+	}
+	if _, err := os.Stat(filepath.Clean(i.TLSKey)); errors.Is(err, os.ErrNotExist) {
+		log.Error().Msgf("TLSKey file '%s' not found. Authentication disbaled.", i.TLSKey)
+		i.AuthEnabled = false
+		return i
+	}
+	log.Info().Msg("Authentication enabled")
+	i.AuthEnabled = true
+	i.refreshCertificates()
+	return i
+}
+
+func (c *InventoryCollection) refreshCertificates() {
+	reschedule := func(d time.Duration) {
+		log.Info().Dur("duration", d).Msg("refreshing key and certificate")
+		t := time.NewTimer(d)
+		<-t.C
+		c.refreshCertificates()
+	}
+
+	certificates, key, err := readKeyAndCertificates(c.TLSCrt, c.TLSKey)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to read certificates")
+		go reschedule(2 * time.Minute)
+		return
+	}
+
+	jwk := jose.JSONWebKey{Certificates: certificates, Key: key}
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: jwk}, &jose.SignerOptions{EmbedJWK: true})
+	if err != nil {
+		log.Error().Err(err).Msg("unable to create JOSE signer")
+		go reschedule(2 * time.Minute)
+		return
+	}
+	c.Signer = signer
+
+	if len(certificates) > 0 {
+		d := time.Until(certificates[0].NotAfter)
+		go reschedule(d - (5 * time.Minute))
+	}
+}
+
+func readKeyAndCertificates(certFile, keyFile string) ([]*x509.Certificate, any, error) {
+	certificates := []*x509.Certificate{}
+	data, err := os.ReadFile(filepath.Clean(certFile))
+	if err != nil {
+		return nil, nil, err
+	}
+	for len(data) > 0 {
+		var block *pem.Block
+		block, data = pem.Decode(data)
+		if block == nil {
+			break
+		}
+		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+			continue
+		}
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, nil, err
+		}
+		certificates = append(certificates, cert)
+	}
+
+	data, err = os.ReadFile(filepath.Clean(keyFile))
+	if err != nil {
+		return nil, nil, err
+	}
+	p, _ := pem.Decode(data)
+	key, err := x509.ParsePKCS8PrivateKey(p.Bytes)
+	if err != nil {
+		key, err = x509.ParsePKCS1PrivateKey(p.Bytes)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return certificates, key, nil
 }
 
 func (c *InventoryCollection) Collect() {
@@ -100,9 +209,24 @@ func (c *InventoryCollection) Collect() {
 func (c *InventoryCollection) Upload() error {
 	log.Info().Msg("uploading inventory")
 
-	payload, err := json.Marshal(c.Inventory)
+	var (
+		payload     []byte
+		err         error
+		contentType string = "application/json; charset=UTF-8"
+	)
+
+	payload, err = json.Marshal(c.Inventory)
 	if err != nil {
 		return errors.Wrap(err, "marshaling inventory")
+	}
+
+	if c.AuthEnabled {
+		jwt, err := c.Signer.Sign(payload)
+		if err != nil {
+			return errors.Wrap(err, "signing inventory")
+		}
+		payload = []byte(jwt.FullSerialize())
+		contentType = "application/jose+json"
 	}
 
 	req, err := http.NewRequest("PUT", c.ServerAPIEndpoint, bytes.NewBuffer(payload))
@@ -110,7 +234,7 @@ func (c *InventoryCollection) Upload() error {
 		return errors.Wrap(err, "creating request")
 	}
 
-	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	req.Header.Set("Content-Type", contentType)
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
