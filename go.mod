@@ -6,6 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/Masterminds/semver v1.5.0
+	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/kloeckner-i/db-operator v1.10.0
 	github.com/neticdk-k8s/k8s-inventory v0.2.10
 	github.com/pkg/errors v0.9.1
@@ -14,6 +15,7 @@ require (
 	github.com/rancher/kubernetes-provider-detector v0.1.5
 	github.com/rs/zerolog v1.31.0
 	github.com/vmware-tanzu/velero v1.12.2
+	gopkg.in/go-jose/go-jose.v2 v2.6.2
 	k8s.io/api v0.26.11
 	k8s.io/apimachinery v0.28.0-alpha.0
 	k8s.io/client-go v0.26.11
@@ -54,6 +56,7 @@ require (
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
