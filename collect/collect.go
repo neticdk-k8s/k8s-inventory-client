@@ -2,6 +2,7 @@ package collect
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -232,12 +233,20 @@ func (c *InventoryCollection) Upload() error {
 		contentType = "application/jose+json"
 	}
 
-	req, err := http.NewRequest("PUT", c.ServerAPIEndpoint, bytes.NewBuffer(payload))
+	var gzippedBuf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&gzippedBuf)
+	gzipWriter.Write(bytes.NewBuffer(payload).Bytes())
+	if err = gzipWriter.Close(); err != nil {
+		return errors.Wrap(err, "compressiong payload")
+	}
+
+	req, err := http.NewRequest("PUT", c.ServerAPIEndpoint, &gzippedBuf)
 	if err != nil {
 		return errors.Wrap(err, "creating request")
 	}
 
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Content-Encoding", "gzip")
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
