@@ -235,7 +235,9 @@ func (c *InventoryCollection) Upload() error {
 
 	var gzippedBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&gzippedBuf)
-	gzipWriter.Write(bytes.NewBuffer(payload).Bytes())
+	if _, err = gzipWriter.Write(bytes.NewBuffer(payload).Bytes()); err != nil {
+		return errors.Wrap(err, "compressiong payload")
+	}
 	if err = gzipWriter.Close(); err != nil {
 		return errors.Wrap(err, "compressiong payload")
 	}
