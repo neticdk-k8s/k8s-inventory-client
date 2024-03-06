@@ -307,6 +307,8 @@ github.com/neticdk-k8s/k8s-inventory v0.2.11-0.20240306130224-e30357235a74 h1:IL
 github.com/neticdk-k8s/k8s-inventory v0.2.11-0.20240306130224-e30357235a74/go.mod h1:9lGHR4HpVF5DEJKDynMXo0fyir4ec+2oEfkE7PS8yy0=
 github.com/neticdk-k8s/k8s-inventory v0.2.11-0.20240306131547-e1b3057000df h1:uCrmfaIgDUqq5eCB0J74gCSosbXv+H0TSvL9Tbdyj0c=
 github.com/neticdk-k8s/k8s-inventory v0.2.11-0.20240306131547-e1b3057000df/go.mod h1:9lGHR4HpVF5DEJKDynMXo0fyir4ec+2oEfkE7PS8yy0=
+github.com/neticdk-k8s/k8s-inventory v0.3.0 h1:Xds8HORNG6CKERPvrSKWmbQ0l8Xk7RkHwfEIYHZMZrs=
+github.com/neticdk-k8s/k8s-inventory v0.3.0/go.mod h1:9lGHR4HpVF5DEJKDynMXo0fyir4ec+2oEfkE7PS8yy0=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
