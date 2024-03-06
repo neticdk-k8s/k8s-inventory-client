@@ -190,6 +190,9 @@ func (c *InventoryCollection) Collect() {
 		log.Debug().Str("collect", "storage").Msg("")
 		c.handleError(CollectStorage(cs, c.Inventory))
 
+		log.Debug().Str("collect", "network_policy").Msg("")
+		c.handleError(CollectNetworkPolicies(cs, c.Inventory))
+
 		log.Debug().Str("collect", "components").Msg("")
 		c.handleError(CollectCustomResources(cs, c.Inventory))
 
