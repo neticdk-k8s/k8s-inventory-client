@@ -49,16 +49,19 @@ func CollectNetworkPolicy(o v1.NetworkPolicy) (*inventory.NetworkPolicy, error) 
 			From:  make([]inventory.NetworkPolicyPeer, 0),
 		}
 		for _, port := range ig.Ports {
-			prot := string(*port.Protocol)
-			ingress.Ports = append(ingress.Ports, inventory.NetworkPolicyPort{
-				Protocol: &prot,
-				Port: &inventory.IntOrString{
+			protocol := string(*port.Protocol)
+			p := inventory.NetworkPolicyPort{
+				Protocol: &protocol,
+				EndPort:  port.EndPort,
+			}
+			if port.Port != nil {
+				p.Port = &inventory.IntOrString{
 					Type:   int(port.Port.Type),
 					IntVal: port.Port.IntVal,
 					StrVal: port.Port.StrVal,
-				},
-				EndPort: port.EndPort,
-			})
+				}
+			}
+			ingress.Ports = append(ingress.Ports)
 		}
 		for _, from := range ig.From {
 			ingressFrom := inventory.NetworkPolicyPeer{}
@@ -106,16 +109,19 @@ func CollectNetworkPolicy(o v1.NetworkPolicy) (*inventory.NetworkPolicy, error) 
 			To:    make([]inventory.NetworkPolicyPeer, 0),
 		}
 		for _, port := range eg.Ports {
-			prot := string(*port.Protocol)
-			egress.Ports = append(egress.Ports, inventory.NetworkPolicyPort{
-				Protocol: &prot,
-				Port: &inventory.IntOrString{
+			protocol := string(*port.Protocol)
+			p := inventory.NetworkPolicyPort{
+				Protocol: &protocol,
+				EndPort:  port.EndPort,
+			}
+			if port.Port != nil {
+				p.Port = &inventory.IntOrString{
 					Type:   int(port.Port.Type),
 					IntVal: port.Port.IntVal,
 					StrVal: port.Port.StrVal,
-				},
-				EndPort: port.EndPort,
-			})
+				}
+			}
+			egress.Ports = append(egress.Ports, p)
 		}
 		for _, to := range eg.To {
 			egressTo := inventory.NetworkPolicyPeer{}
