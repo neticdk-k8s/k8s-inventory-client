@@ -18,6 +18,7 @@ type Config struct {
 	TLSCrt             string `env:"TLS_CRT,default=/etc/certificates/tls.crt"`
 	TLSKey             string `env:"TLS_KEY,default=/etc/certificates/tls.key"`
 	AuthEnabled        bool   `env:"AUTH_ENABLED,default=true"`
+	Debug              bool   `env:"DEBUG,default=false"`
 	Extras             env.EnvSet
 }
 
