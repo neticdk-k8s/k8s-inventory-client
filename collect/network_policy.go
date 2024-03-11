@@ -61,7 +61,7 @@ func CollectNetworkPolicy(o v1.NetworkPolicy) (*inventory.NetworkPolicy, error) 
 					StrVal: port.Port.StrVal,
 				}
 			}
-			ingress.Ports = append(ingress.Ports)
+			ingress.Ports = append(ingress.Ports, p)
 		}
 		for _, from := range ig.From {
 			ingressFrom := inventory.NetworkPolicyPeer{}
