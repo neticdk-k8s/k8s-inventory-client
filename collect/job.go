@@ -12,15 +12,30 @@ import (
 )
 
 func CollectJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
+	options := metav1.ListOptions{Limit: 500}
 	jobs := make([]*inventory.Workload, 0)
-	jobList, err := cs.BatchV1().
-		Jobs("").
-		List(context.Background(), metav1.ListOptions{})
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return nil, fmt.Errorf("getting Jobs/v1: %v", err)
-	}
-	for _, o := range jobList.Items {
-		jobs = append(jobs, CollectJob(o))
+	for {
+		jobList, err := cs.BatchV1().
+			Jobs("").
+			List(context.Background(), options)
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return nil, fmt.Errorf("getting Jobs/v1: %v", err)
+		}
+	items:
+		for _, o := range jobList.Items {
+			if o.OwnerReferences != nil {
+				for _, r := range o.OwnerReferences {
+					if r.Kind == "CronJob" {
+						continue items
+					}
+				}
+			}
+			jobs = append(jobs, CollectJob(o))
+		}
+		if jobList.Continue == "" {
+			break
+		}
+		options.Continue = jobList.Continue
 	}
 	return jobs, nil
 }
