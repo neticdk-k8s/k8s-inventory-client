@@ -15,7 +15,7 @@ require (
 	github.com/rancher/kubernetes-provider-detector v0.1.5
 	github.com/rs/zerolog v1.31.0
 	github.com/vmware-tanzu/velero v1.12.2
-	gopkg.in/go-jose/go-jose.v2 v2.6.2
+	gopkg.in/go-jose/go-jose.v2 v2.6.3
 	k8s.io/api v0.26.11
 	k8s.io/apimachinery v0.28.0-alpha.0
 	k8s.io/client-go v0.26.11
