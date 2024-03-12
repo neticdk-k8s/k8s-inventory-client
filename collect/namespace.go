@@ -11,19 +11,19 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectNetworkPolicies(cs *ck.Clientset, i *inventory.Inventory) error {
-	nl := make([]*inventory.Namespace, 0)
-	namespaces, err := cs.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
+	npl := make([]*inventory.NetworkPolicy, 0)
+	networkPolicies, err := cs.NetworkingV1().NetworkPolicies("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("getting namespaces: %v", err)
+		return fmt.Errorf("getting network policies: %v", err)
 	}
 	var errs []error
-	for _, o := range namespaces.Items {
-		ns, err := CollectNamespace(o)
+	for _, o := range networkPolicies.Items {
+		np, err := CollectNetworkPolicy(o)
 		errs = append(errs, err)
-		nl = append(nl, ns)
+		npl = append(npl, np)
 	}
-	i.Namespaces = nl
+	i.NetworkPolicies = npl
 	return errors.Join(errs...)
 }
 

@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/kloeckner-i/db-operator v1.10.0
-	github.com/neticdk-k8s/k8s-inventory v0.3.1
+	github.com/neticdk-k8s/k8s-inventory v0.3.2-0.20240312150322-ea94ff70e459
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.7.0
 	github.com/projectcalico/api v0.0.0-20230222223746-44aa60c2201f

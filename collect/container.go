@@ -5,10 +5,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func getContainerInfoFromContainers(containers []v1.Container) (ret []*inventory.Container) {
-	ret = []*inventory.Container{}
+func getContainerInfoFromContainers(containers []v1.Container) (ret []*inventory.PodTemplateContainer) {
+	ret = []*inventory.PodTemplateContainer{}
 	for _, c := range containers {
-		i := &inventory.Container{
+		i := &inventory.PodTemplateContainer{
 			Image:          c.Image,
 			LimitsCPU:      c.Resources.Limits.Cpu().MilliValue(),
 			LimitsMemory:   c.Resources.Limits.Memory().Value(),

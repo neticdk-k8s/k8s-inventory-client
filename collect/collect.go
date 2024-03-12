@@ -200,6 +200,9 @@ func (c *InventoryCollection) Collect() {
 		log.Debug().Str("collect", "workload").Msg("")
 		c.handleError(CollectWorkloads(cs, c.Inventory))
 
+		log.Debug().Str("collect", "pods").Msg("")
+		c.handleError(CollectPods(cs, c.Inventory))
+
 		if c.UploadInventory {
 			if err := c.Upload(); err != nil {
 				log.Error().Stack().Err(err).Msg("uplading inventory")
