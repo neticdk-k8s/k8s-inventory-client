@@ -12,18 +12,18 @@ import (
 )
 
 func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
-	npl := make([]*inventory.NetworkPolicy, 0)
-	networkPolicies, err := cs.NetworkingV1().NetworkPolicies("").List(context.Background(), metav1.ListOptions{})
+	nl := make([]*inventory.Namespace, 0)
+	namespaces, err := cs.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("getting network policies: %v", err)
+		return fmt.Errorf("getting namespaces: %v", err)
 	}
 	var errs []error
-	for _, o := range networkPolicies.Items {
-		np, err := CollectNetworkPolicy(o)
+	for _, o := range namespaces.Items {
+		ns, err := CollectNamespace(o)
 		errs = append(errs, err)
-		npl = append(npl, np)
+		nl = append(nl, ns)
 	}
-	i.NetworkPolicies = npl
+	i.Namespaces = nl
 	return errors.Join(errs...)
 }
 
