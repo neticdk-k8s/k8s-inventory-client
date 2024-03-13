@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	inventory "github.com/neticdk-k8s/k8s-inventory"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +20,28 @@ func readConfigMapByName(cs *ck.Clientset, ns string, name string) (*v1.ConfigMa
 		return nil, err
 	}
 	return res, nil
+}
+
+func resolveRootOwner(kc client.Client, obj client.Object) (*inventory.RootOwner, error) {
+	if len(obj.GetOwnerReferences()) == 0 {
+		return nil, nil
+	}
+	rootObj, err := resolveOwnerChain(kc, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if rootObj != nil {
+		rootOwner := &inventory.RootOwner{
+			Kind:       rootObj.GetObjectKind().GroupVersionKind().Kind,
+			APIGroup:   rootObj.GetObjectKind().GroupVersionKind().Group,
+			APIVersion: rootObj.GetObjectKind().GroupVersionKind().Version,
+			Name:       rootObj.GetName(),
+			Namespace:  rootObj.GetNamespace(),
+		}
+		return rootOwner, nil
+	}
+	return nil, nil
 }
 
 func resolveOwnerChain(kc client.Client, obj client.Object) (client.Object, error) {

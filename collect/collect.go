@@ -198,10 +198,7 @@ func (c *InventoryCollection) Collect() {
 		c.handleError(CollectCustomResources(cs, c.Inventory))
 
 		log.Debug().Str("collect", "workload").Msg("")
-		c.handleError(CollectWorkloads(cs, c.Inventory))
-
-		log.Debug().Str("collect", "pods").Msg("")
-		c.handleError(CollectPods(cs, client, c.Inventory))
+		c.handleError(CollectWorkloads(cs, client, c.Inventory))
 
 		if c.UploadInventory {
 			if err := c.Upload(); err != nil {

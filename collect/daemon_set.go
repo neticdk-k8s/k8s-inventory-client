@@ -2,15 +2,17 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectDaemonSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	dsets := make([]*inventory.Workload, 0)
 
 	daemonSetList, err := cs.AppsV1().
@@ -19,13 +21,16 @@ func CollectDaemonSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getting DaemonSets: %v", err)
 	}
+	var errs []error
 	for _, o := range daemonSetList.Items {
-		dsets = append(dsets, CollectDaemonSet(o))
+		dset, err := CollectDaemonSet(client, o)
+		errs = append(errs, err)
+		dsets = append(dsets, dset)
 	}
-	return dsets, nil
+	return dsets, errors.Join(errs...)
 }
 
-func CollectDaemonSet(o v1.DaemonSet) *inventory.Workload {
+func CollectDaemonSet(client client.Client, o v1.DaemonSet) (*inventory.Workload, error) {
 	r := inventory.NewDaemonSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -44,5 +49,11 @@ func CollectDaemonSet(o v1.DaemonSet) *inventory.Workload {
 		DesiredNumberScheduled: o.Status.DesiredNumberScheduled,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }

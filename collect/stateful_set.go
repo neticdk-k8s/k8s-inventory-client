@@ -2,15 +2,17 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectStatefulSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	ssets := make([]*inventory.Workload, 0)
 
 	statefulSetList, err := cs.AppsV1().
@@ -19,13 +21,16 @@ func CollectStatefulSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getting StatefulSets: %v", err)
 	}
+	var errs []error
 	for _, o := range statefulSetList.Items {
-		ssets = append(ssets, CollectStatefulSet(o))
+		sset, err := CollectStatefulSet(client, o)
+		errs = append(errs, err)
+		ssets = append(ssets, sset)
 	}
-	return ssets, nil
+	return ssets, errors.Join(errs...)
 }
 
-func CollectStatefulSet(o v1.StatefulSet) *inventory.Workload {
+func CollectStatefulSet(client client.Client, o v1.StatefulSet) (*inventory.Workload, error) {
 	r := inventory.NewStatefulSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -48,5 +53,11 @@ func CollectStatefulSet(o v1.StatefulSet) *inventory.Workload {
 		AvailableReplicas: o.Status.AvailableReplicas,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }

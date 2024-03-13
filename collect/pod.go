@@ -13,9 +13,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectPods(cs *ck.Clientset, client client.Client, i *inventory.Inventory) error {
+func CollectPods(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+	pods := make([]*inventory.Workload, 0)
 	options := metav1.ListOptions{Limit: 500}
-	pods := make([]*inventory.Pod, 0)
 	var errs []error
 	for {
 		podList, err := cs.CoreV1().
@@ -34,16 +34,15 @@ func CollectPods(cs *ck.Clientset, client client.Client, i *inventory.Inventory)
 		}
 		options.Continue = podList.Continue
 	}
-	i.Pods = pods
-	return errors.Join(errs...)
+	return pods, errors.Join(errs...)
 }
 
-func CollectPod(client client.Client, o v1.Pod) (*inventory.Pod, error) {
+func CollectPod(client client.Client, o v1.Pod) (*inventory.Workload, error) {
 	r := inventory.NewPod()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 
-	r.Spec = inventory.PodSpec{
+	podSpec := inventory.PodSpec{
 		InitContainers:     getContainers(o.Spec.InitContainers),
 		Containers:         getContainers(o.Spec.Containers),
 		RestartPolicy:      string(o.Spec.RestartPolicy),
@@ -54,27 +53,28 @@ func CollectPod(client client.Client, o v1.Pod) (*inventory.Pod, error) {
 		Priority:           o.Spec.Priority,
 	}
 	if o.Spec.SecurityContext != nil {
-		r.Spec.SecurityContext = &inventory.PodSecurityContext{
+		podSpec.SecurityContext = &inventory.PodSecurityContext{
 			RunAsUser:          o.Spec.SecurityContext.RunAsUser,
 			RunAsGroup:         o.Spec.SecurityContext.RunAsUser,
 			RunAsNonRoot:       o.Spec.SecurityContext.RunAsNonRoot,
 			SupplementalGroups: make([]int64, 0),
 		}
-		r.Spec.SecurityContext.SupplementalGroups = append(r.Spec.SecurityContext.SupplementalGroups, o.Spec.SecurityContext.SupplementalGroups...)
+		podSpec.SecurityContext.SupplementalGroups = append(podSpec.SecurityContext.SupplementalGroups, o.Spec.SecurityContext.SupplementalGroups...)
 	}
 	if o.Spec.PreemptionPolicy != nil {
 		policy := string(*o.Spec.PreemptionPolicy)
-		r.Spec.PreemptionPolicy = &policy
+		podSpec.PreemptionPolicy = &policy
 	}
 	for _, v := range o.Spec.Volumes {
 		vol := inventory.Volume{
 			Name:   v.Name,
 			Source: volumeSource(v),
 		}
-		r.Spec.Volumes = append(r.Spec.Volumes, vol)
+		podSpec.Volumes = append(podSpec.Volumes, vol)
 	}
+	r.Spec = podSpec
 
-	r.Status = inventory.PodStatus{
+	podStatus := inventory.PodStatus{
 		Phase:                 string(o.Status.Phase),
 		Conditions:            make([]inventory.PodCondition, 0),
 		PodIP:                 o.Status.PodIP,
@@ -85,27 +85,19 @@ func CollectPod(client client.Client, o v1.Pod) (*inventory.Pod, error) {
 	}
 
 	for _, c := range o.Status.Conditions {
-		r.Status.Conditions = append(r.Status.Conditions, inventory.PodCondition{
+		podStatus.Conditions = append(podStatus.Conditions, inventory.PodCondition{
 			Type:    string(c.Type),
 			Status:  string(c.Status),
 			Message: c.Message,
 		})
 	}
+	r.Status = podStatus
 
-	rootObj, err := resolveOwnerChain(client, &o)
+	rootOwner, err := resolveRootOwner(client, &o)
 	if err != nil {
 		return nil, err
 	}
-	if rootObj != nil {
-		rootOwner := &inventory.RootOwner{
-			Kind:       rootObj.GetObjectKind().GroupVersionKind().Kind,
-			APIGroup:   rootObj.GetObjectKind().GroupVersionKind().Group,
-			APIVersion: rootObj.GetObjectKind().GroupVersionKind().Version,
-			Name:       rootObj.GetName(),
-			Namespace:  rootObj.GetNamespace(),
-		}
-		r.RootOwner = rootOwner
-	}
+	r.RootOwner = rootOwner
 
 	return r, nil
 }

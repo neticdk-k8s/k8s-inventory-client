@@ -12,24 +12,25 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectCronJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectCronJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
-	v1Jobs, v1Err := CollectCronJobsV1(cs)
+	v1Jobs, v1Err := CollectCronJobsV1(cs, client)
 	cjs = append(cjs, v1Jobs...)
 	var (
 		v1BetaErr  error
 		v1BetaJobs []*inventory.Workload
 	)
 	if len(cjs) == 0 {
-		v1BetaJobs, v1BetaErr = CollectCronJobsV1beta1(cs)
+		v1BetaJobs, v1BetaErr = CollectCronJobsV1beta1(cs, client)
 		cjs = append(cjs, v1BetaJobs...)
 	}
 	return cjs, errors.Join(v1Err, v1BetaErr)
 }
 
-func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectCronJobsV1beta1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1beta1().
 		CronJobs("").
@@ -37,14 +38,16 @@ func CollectCronJobsV1beta1(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("getting CronJobs/v1beta1: %v", err)
 	}
+	var errs []error
 	for _, o := range cronJobList.Items {
-		cj := CollectCronJob(inventory.NewCronJob(), o)
+		cj, err := CollectCronJob(inventory.NewCronJob(), client, o)
+		errs = append(errs, err)
 		cjs = append(cjs, cj)
 	}
-	return cjs, nil
+	return cjs, errors.Join(errs...)
 }
 
-func CollectCronJobsV1(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectCronJobsV1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1().
 		CronJobs("").
@@ -52,26 +55,28 @@ func CollectCronJobsV1(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("getting CronJobs/v1: %v", err)
 	}
+	var errs []error
 	for _, o := range cronJobList.Items {
-		cj := CollectCronJob(inventory.NewCronJob(), o)
+		cj, err := CollectCronJob(inventory.NewCronJob(), client, o)
+		errs = append(errs, err)
 		cjs = append(cjs, cj)
 	}
-	return cjs, nil
+	return cjs, errors.Join(errs...)
 }
 
-func CollectCronJob(cj *inventory.Workload, o interface{}) *inventory.Workload {
+func CollectCronJob(cj *inventory.Workload, client client.Client, o interface{}) (*inventory.Workload, error) {
 	switch obj := o.(type) {
 	case v1beta1.CronJob:
-		return CollectCronJobV1Beta1(obj)
+		return CollectCronJobV1Beta1(obj, client)
 	case v1.CronJob:
-		return CollectCronJobV1(obj)
+		return CollectCronJobV1(obj, client)
 	default:
 		log.Warn().Msgf("api/resource: %v not supported", obj)
 	}
-	return cj
+	return cj, nil
 }
 
-func CollectCronJobV1(o v1.CronJob) *inventory.Workload {
+func CollectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, error) {
 	r := inventory.NewCronJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -90,10 +95,16 @@ func CollectCronJobV1(o v1.CronJob) *inventory.Workload {
 		LastSuccessfulTime: o.Status.LastSuccessfulTime,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }
 
-func CollectCronJobV1Beta1(o v1beta1.CronJob) *inventory.Workload {
+func CollectCronJobV1Beta1(o v1beta1.CronJob, client client.Client) (*inventory.Workload, error) {
 	r := inventory.NewCronJob()
 	r.APIVersion = "v1beta1"
 
@@ -113,5 +124,11 @@ func CollectCronJobV1Beta1(o v1beta1.CronJob) *inventory.Workload {
 		LastSuccessfulTime: o.Status.LastSuccessfulTime,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }

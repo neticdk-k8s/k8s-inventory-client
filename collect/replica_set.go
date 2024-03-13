@@ -2,15 +2,17 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectReplicaSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	rsets := make([]*inventory.Workload, 0)
 
 	replicaSetList, err := cs.AppsV1().
@@ -19,13 +21,16 @@ func CollectReplicaSets(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getting ReplicaSets: %v", err)
 	}
+	var errs []error
 	for _, o := range replicaSetList.Items {
-		rsets = append(rsets, CollectReplicaSet(o))
+		rset, err := CollectReplicaSet(client, o)
+		errs = append(errs, err)
+		rsets = append(rsets, rset)
 	}
-	return rsets, nil
+	return rsets, errors.Join(errs...)
 }
 
-func CollectReplicaSet(o v1.ReplicaSet) *inventory.Workload {
+func CollectReplicaSet(client client.Client, o v1.ReplicaSet) (*inventory.Workload, error) {
 	r := inventory.NewReplicaSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -45,5 +50,11 @@ func CollectReplicaSet(o v1.ReplicaSet) *inventory.Workload {
 		AvailableReplicas:    o.Status.AvailableReplicas,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }

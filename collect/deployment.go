@@ -2,6 +2,7 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
@@ -9,9 +10,10 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectDeployments(cs *ck.Clientset) ([]*inventory.Workload, error) {
+func CollectDeployments(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	deployments := make([]*inventory.Workload, 0)
 	deploymentList, err := cs.AppsV1().
 		Deployments("").
@@ -19,13 +21,16 @@ func CollectDeployments(cs *ck.Clientset) ([]*inventory.Workload, error) {
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("getting Deployments: %v", err)
 	}
+	var errs []error
 	for _, o := range deploymentList.Items {
-		deployments = append(deployments, CollectDeployment(o))
+		deployment, err := CollectDeployment(client, o)
+		errs = append(errs, err)
+		deployments = append(deployments, deployment)
 	}
-	return deployments, nil
+	return deployments, errors.Join(errs...)
 }
 
-func CollectDeployment(o v1.Deployment) *inventory.Workload {
+func CollectDeployment(client client.Client, o v1.Deployment) (*inventory.Workload, error) {
 	r := inventory.NewDeployment()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -47,5 +52,11 @@ func CollectDeployment(o v1.Deployment) *inventory.Workload {
 		UnavailableReplicas: o.Status.UnavailableReplicas,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }

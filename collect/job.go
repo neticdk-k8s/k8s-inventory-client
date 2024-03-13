@@ -2,6 +2,7 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
@@ -9,11 +10,13 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
-	options := metav1.ListOptions{Limit: 500}
+func CollectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	jobs := make([]*inventory.Workload, 0)
+	options := metav1.ListOptions{Limit: 500}
+	var errs []error
 	for {
 		jobList, err := cs.BatchV1().
 			Jobs("").
@@ -30,17 +33,19 @@ func CollectJobs(cs *ck.Clientset) ([]*inventory.Workload, error) {
 					}
 				}
 			}
-			jobs = append(jobs, CollectJob(o))
+			job, err := CollectJob(client, o)
+			errs = append(errs, err)
+			jobs = append(jobs, job)
 		}
 		if jobList.Continue == "" {
 			break
 		}
 		options.Continue = jobList.Continue
 	}
-	return jobs, nil
+	return jobs, errors.Join(errs...)
 }
 
-func CollectJob(o v1.Job) *inventory.Workload {
+func CollectJob(client client.Client, o v1.Job) (*inventory.Workload, error) {
 	r := inventory.NewJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -64,5 +69,11 @@ func CollectJob(o v1.Job) *inventory.Workload {
 		Failed:         o.Status.Failed,
 	}
 
-	return r
+	rootOwner, err := resolveRootOwner(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	r.RootOwner = rootOwner
+
+	return r, nil
 }
