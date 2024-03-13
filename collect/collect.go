@@ -167,7 +167,7 @@ func (c *InventoryCollection) Collect() {
 		c.Inventory.CollectionSucceeded = true
 		c.Inventory.ClientVersion = version.VERSION
 		c.Inventory.ClientCommit = version.COMMIT
-		cs, err := kubernetes.CreateK8SClient(c.Impersonate)
+		cs, client, err := kubernetes.CreateK8SClient(c.Impersonate)
 		if err != nil {
 			log.Error().Err(err).Msg("creating clientset")
 			c.Inventory.CollectionSucceeded = false
@@ -201,7 +201,7 @@ func (c *InventoryCollection) Collect() {
 		c.handleError(CollectWorkloads(cs, c.Inventory))
 
 		log.Debug().Str("collect", "pods").Msg("")
-		c.handleError(CollectPods(cs, c.Inventory))
+		c.handleError(CollectPods(cs, client, c.Inventory))
 
 		if c.UploadInventory {
 			if err := c.Upload(); err != nil {

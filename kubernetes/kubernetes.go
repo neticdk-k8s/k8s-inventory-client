@@ -7,13 +7,14 @@ import (
 	"os"
 
 	"github.com/rs/zerolog/log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ck "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func CreateK8SClient(impersonate string) (*ck.Clientset, error) {
+func CreateK8SClient(impersonate string) (*ck.Clientset, client.Client, error) {
 	var err error
 	var conf *restclient.Config
 	conf, err = restclient.InClusterConfig()
@@ -22,7 +23,7 @@ func CreateK8SClient(impersonate string) (*ck.Clientset, error) {
 		log.Info().Msg("using out-of-cluster config")
 		conf, err = clientcmd.BuildConfigFromFlags("", os.Getenv("HOME")+"/.kube/config")
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	log.Info().Msg("using in-cluster config")
@@ -33,9 +34,14 @@ func CreateK8SClient(impersonate string) (*ck.Clientset, error) {
 
 	clientset, err := ck.NewForConfig(conf)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return clientset, err
+	cl, err := client.New(conf, client.Options{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return clientset, cl, err
 }
 
 func GetK8SRESTResource(cs *ck.Clientset, path string) (res restclient.Result, found bool, err error) {

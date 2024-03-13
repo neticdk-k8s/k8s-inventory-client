@@ -10,9 +10,10 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ck "k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectPods(cs *ck.Clientset, i *inventory.Inventory) error {
+func CollectPods(cs *ck.Clientset, client client.Client, i *inventory.Inventory) error {
 	options := metav1.ListOptions{Limit: 500}
 	pods := make([]*inventory.Pod, 0)
 	var errs []error
@@ -24,7 +25,7 @@ func CollectPods(cs *ck.Clientset, i *inventory.Inventory) error {
 			errs = append(errs, fmt.Errorf("getting Pods: %v", err))
 		}
 		for _, o := range podList.Items {
-			pod, err := CollectPod(o)
+			pod, err := CollectPod(client, o)
 			errs = append(errs, err)
 			pods = append(pods, pod)
 		}
@@ -37,7 +38,7 @@ func CollectPods(cs *ck.Clientset, i *inventory.Inventory) error {
 	return errors.Join(errs...)
 }
 
-func CollectPod(o v1.Pod) (*inventory.Pod, error) {
+func CollectPod(client client.Client, o v1.Pod) (*inventory.Pod, error) {
 	r := inventory.NewPod()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -89,6 +90,21 @@ func CollectPod(o v1.Pod) (*inventory.Pod, error) {
 			Status:  string(c.Status),
 			Message: c.Message,
 		})
+	}
+
+	rootObj, err := resolveOwnerChain(client, &o)
+	if err != nil {
+		return nil, err
+	}
+	if rootObj != nil {
+		rootOwner := &inventory.RootOwner{
+			Kind:       rootObj.GetObjectKind().GroupVersionKind().Kind,
+			APIGroup:   rootObj.GetObjectKind().GroupVersionKind().Group,
+			APIVersion: rootObj.GetObjectKind().GroupVersionKind().Version,
+			Name:       rootObj.GetName(),
+			Namespace:  rootObj.GetNamespace(),
+		}
+		r.RootOwner = rootOwner
 	}
 
 	return r, nil
