@@ -11,7 +11,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
+func CollectNetworkPolicies(cs *ck.Clientset, i *inventory.Inventory) error {
 	npl := make([]*inventory.NetworkPolicy, 0)
 	networkPolicies, err := cs.NetworkingV1().NetworkPolicies("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
