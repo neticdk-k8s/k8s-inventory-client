@@ -9,14 +9,17 @@ import (
 	"github.com/rs/zerolog/log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/go-logr/zerologr"
 	ck "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	rtlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func CreateK8SClient(impersonate string) (*ck.Clientset, client.Client, error) {
 	var err error
 	var conf *restclient.Config
+	rtlog.SetLogger(zerologr.New(&log.Logger))
 	conf, err = restclient.InClusterConfig()
 	if err != nil {
 		log.Debug().Err(err).Msg("")
@@ -25,8 +28,9 @@ func CreateK8SClient(impersonate string) (*ck.Clientset, client.Client, error) {
 		if err != nil {
 			return nil, nil, err
 		}
+	} else {
+		log.Info().Msg("using in-cluster config")
 	}
-	log.Info().Msg("using in-cluster config")
 	if impersonate != "" {
 		log.Info().Str("user", impersonate).Msg("impersonating as user")
 		conf.Impersonate = restclient.ImpersonationConfig{UserName: impersonate}
