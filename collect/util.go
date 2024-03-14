@@ -53,7 +53,7 @@ func resolveOwnerChain(kc client.Client, obj client.Object) (client.Object, erro
 		err := kc.Get(context.TODO(), client.ObjectKey{Namespace: obj.GetNamespace(), Name: owner.Name}, o)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
-				return nil, fmt.Errorf("owner has been deleted: %w", err)
+				return nil, nil
 			}
 			return nil, fmt.Errorf("getting object from object ref: %w", err)
 		}
