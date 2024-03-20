@@ -11,7 +11,7 @@ import (
 	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 )
 
-func CollectPVs(cs *ck.Clientset) ([]*inventory.PersistentVolume, error) {
+func collectPVs(cs *ck.Clientset) ([]*inventory.PersistentVolume, error) {
 	pvs := make([]*inventory.PersistentVolume, 0)
 	pvList, err := cs.CoreV1().
 		PersistentVolumes().
@@ -20,12 +20,12 @@ func CollectPVs(cs *ck.Clientset) ([]*inventory.PersistentVolume, error) {
 		return nil, fmt.Errorf("getting PersistentVolumes: %v", err)
 	}
 	for _, o := range pvList.Items {
-		pvs = append(pvs, CollectPV(o))
+		pvs = append(pvs, collectPV(o))
 	}
 	return pvs, nil
 }
 
-func CollectPV(o v1.PersistentVolume) *inventory.PersistentVolume {
+func collectPV(o v1.PersistentVolume) *inventory.PersistentVolume {
 	r := inventory.NewPersistentVolume()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

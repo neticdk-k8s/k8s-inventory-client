@@ -10,7 +10,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectStorageClasses(cs *ck.Clientset) ([]*inventory.StorageClass, error) {
+func collectStorageClasses(cs *ck.Clientset) ([]*inventory.StorageClass, error) {
 	sclss := make([]*inventory.StorageClass, 0)
 	scList, err := cs.StorageV1().
 		StorageClasses().
@@ -19,12 +19,12 @@ func CollectStorageClasses(cs *ck.Clientset) ([]*inventory.StorageClass, error) 
 		return nil, fmt.Errorf("getting StorageClasses: %v", err)
 	}
 	for _, o := range scList.Items {
-		sclss = append(sclss, CollectStorageClass(o))
+		sclss = append(sclss, collectStorageClass(o))
 	}
 	return sclss, nil
 }
 
-func CollectStorageClass(o storagev1.StorageClass) *inventory.StorageClass {
+func collectStorageClass(o storagev1.StorageClass) *inventory.StorageClass {
 	r := inventory.NewStorageClass()
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 	r.Provisioner = o.Provisioner

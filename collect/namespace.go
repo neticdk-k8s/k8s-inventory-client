@@ -11,7 +11,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
+func collectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
 	nl := make([]*inventory.Namespace, 0)
 	namespaces, err := cs.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
@@ -19,7 +19,7 @@ func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
 	}
 	var errs []error
 	for _, o := range namespaces.Items {
-		ns, err := CollectNamespace(o)
+		ns, err := collectNamespace(o)
 		errs = append(errs, err)
 		nl = append(nl, ns)
 	}
@@ -27,7 +27,7 @@ func CollectNamespaces(cs *ck.Clientset, i *inventory.Inventory) error {
 	return errors.Join(errs...)
 }
 
-func CollectNamespace(o v1.Namespace) (*inventory.Namespace, error) {
+func collectNamespace(o v1.Namespace) (*inventory.Namespace, error) {
 	r := inventory.NewNamespace()
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 	return r, nil

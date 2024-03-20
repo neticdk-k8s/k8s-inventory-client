@@ -7,7 +7,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCalico(cs *ck.Clientset) (*inventory.CalicoClusterInformation, error) {
+func collectCalico(cs *ck.Clientset) (*inventory.CalicoClusterInformation, error) {
 	r := inventory.NewCalicoClusterInformation()
 
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/crd.projectcalico.org/v1/clusterinformations/default")

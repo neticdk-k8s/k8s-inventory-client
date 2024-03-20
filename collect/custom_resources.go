@@ -7,7 +7,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) error {
+func collectCustomResources(cs *ck.Clientset, i *inventory.Inventory) error {
 	var errs []error
 
 	resourceMap := make(map[string]bool)
@@ -34,25 +34,25 @@ func CollectCustomResources(cs *ck.Clientset, i *inventory.Inventory) error {
 	}
 
 	if i.CustomResources.HasVelero {
-		velero_backups, err := CollectVeleroBackups(cs)
+		velero_backups, err := collectVeleroBackups(cs)
 		errs = append(errs, err)
 		i.CustomResources.Velero.Backups = velero_backups
-		velero_schedules, err := CollectVeleroSchedules(cs)
+		velero_schedules, err := collectVeleroSchedules(cs)
 		errs = append(errs, err)
 		i.CustomResources.Velero.Schedules = velero_schedules
 	}
 	if i.CustomResources.HasKCIRocks {
-		kcirocks_db_instances, err := CollectKCIRocksDBInstances(cs)
+		kcirocks_db_instances, err := collectKCIRocksDBInstances(cs)
 		errs = append(errs, err)
 		i.CustomResources.KCIRocks.DBInstances = kcirocks_db_instances
 	}
 	if i.CustomResources.HasRabbitMQ {
-		rabbitmq_clusters, err := CollectRabbitMQClusters(cs)
+		rabbitmq_clusters, err := collectRabbitMQClusters(cs)
 		errs = append(errs, err)
 		i.CustomResources.RabbitMQ.Clusters = rabbitmq_clusters
 	}
 	if i.CustomResources.HasCalico {
-		calico, err := CollectCalico(cs)
+		calico, err := collectCalico(cs)
 		errs = append(errs, err)
 		i.CustomResources.CalicoCluster = calico
 	}

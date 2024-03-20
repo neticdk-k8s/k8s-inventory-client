@@ -58,19 +58,20 @@ for a list of permissions.
 
 Configuration is done using environment variables:
 
-| Variable Name         | Description                                    |                                Default |
-| :-------------------- | :--------------------------------------------- | -------------------------------------: |
-| `HTTP_PORT`           | HTTP port to listen on                         |                                   8087 |
-| `COLLECT_INTERNAL`    | How often to collect                           |                                     1h |
-| `LOG_LEVEL`           | Logging level                                  |                                   info |
-| `LOG_FORMATTER`       | Log output formatter                           |                                   json |
-| `UPLOAD_INVENTORY`    | Upload inventory                               |                                   true |
-| `SERVER_API_ENDPOINT` | HTTP URL to upload data to                     | http://localhost:8086/api/v1/inventory |
-| `AUTH_ENABLED`        | Enable/disable authentication                  |                                   true |
-| `TLS_CRT`             | PEM Certificate file to use for authentication |              /etc/certificates/tls.crt |
-| `TLS_KEY`             | PEM KEY file to use for authentication         |              /etc/certificates/tls.key |
-| `SERVER_API_ENDPOINT` | HTTP URL to upload data to                     | http://localhost:8086/api/v1/inventory |
-| `IMPERSONATE`         | Kubernetes role to imporsonate                 |                                        |
+| Variable Name         | Description                                      |                                Default |
+| :-------------------- | :----------------------------------------------- | -------------------------------------: |
+| `HTTP_PORT`           | HTTP port to listen on for the inventory service |                                   8087 |
+| `HTTP_PORT_META`      | HTTP port to listen on for the metadata service  |                                   8088 |
+| `COLLECT_INTERNAL`    | How often to collect                             |                                     1h |
+| `LOG_LEVEL`           | Logging level                                    |                                   info |
+| `LOG_FORMATTER`       | Log output formatter                             |                                   json |
+| `UPLOAD_INVENTORY`    | Upload inventory                                 |                                   true |
+| `SERVER_API_ENDPOINT` | HTTP URL to upload data to                       | http://localhost:8086/api/v1/inventory |
+| `AUTH_ENABLED`        | Enable/disable authentication                    |                                   true |
+| `TLS_CRT`             | PEM Certificate file to use for authentication   |              /etc/certificates/tls.crt |
+| `TLS_KEY`             | PEM KEY file to use for authentication           |              /etc/certificates/tls.key |
+| `SERVER_API_ENDPOINT` | HTTP URL to upload data to                       | http://localhost:8086/api/v1/inventory |
+| `IMPERSONATE`         | Kubernetes role to imporsonate                   |                                        |
 
 ### Collection Intervals
 

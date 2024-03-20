@@ -9,7 +9,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectCluster(cs *ck.Clientset, i *inventory.Inventory) error {
+func collectCluster(cs *ck.Clientset, i *inventory.Inventory) error {
 	v, err := cs.Discovery().ServerVersion()
 	if err != nil {
 		return fmt.Errorf("getting server version: %v", err)
@@ -31,7 +31,7 @@ func CollectCluster(cs *ck.Clientset, i *inventory.Inventory) error {
 	return nil
 }
 
-func CollectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
+func collectSCSMetadata(cs *ck.Clientset, i *inventory.Inventory) error {
 	cm, err := readConfigMapByName(cs, "netic-metadata-system", "cluster-id")
 	if err != nil {
 		return err

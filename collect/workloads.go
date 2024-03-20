@@ -8,28 +8,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectWorkloads(cs *ck.Clientset, client client.Client, i *inventory.Inventory) error {
+func collectWorkloads(cs *ck.Clientset, client client.Client, i *inventory.Inventory) error {
 	i.Workloads = make([]*inventory.Workload, 0)
 
-	deployments, deploymentsErr := CollectDeployments(cs, client)
+	deployments, deploymentsErr := collectDeployments(cs, client)
 	i.Workloads = append(i.Workloads, deployments...)
 
-	statefulSets, statefulSetsErr := CollectStatefulSets(cs, client)
+	statefulSets, statefulSetsErr := collectStatefulSets(cs, client)
 	i.Workloads = append(i.Workloads, statefulSets...)
 
-	replicaSets, replicaSetsErr := CollectReplicaSets(cs, client)
+	replicaSets, replicaSetsErr := collectReplicaSets(cs, client)
 	i.Workloads = append(i.Workloads, replicaSets...)
 
-	daemonSets, daemonSetsErr := CollectDaemonSets(cs, client)
+	daemonSets, daemonSetsErr := collectDaemonSets(cs, client)
 	i.Workloads = append(i.Workloads, daemonSets...)
 
-	cronJobs, cronJobErr := CollectCronJobs(cs, client)
+	cronJobs, cronJobErr := collectCronJobs(cs, client)
 	i.Workloads = append(i.Workloads, cronJobs...)
 
-	jobs, jobsErr := CollectJobs(cs, client)
+	jobs, jobsErr := collectJobs(cs, client)
 	i.Workloads = append(i.Workloads, jobs...)
 
-	pods, podsErr := CollectPods(cs, client)
+	pods, podsErr := collectPods(cs, client)
 	i.Workloads = append(i.Workloads, pods...)
 
 	return errors.Join(

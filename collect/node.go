@@ -13,7 +13,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) error {
+func collectNodes(cs *ck.Clientset, i *inventory.Inventory) error {
 	nl := make([]*inventory.Node, 0)
 	nodes, err := cs.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -21,7 +21,7 @@ func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) error {
 	}
 	var errs []error
 	for _, o := range nodes.Items {
-		node, err := CollectNode(o)
+		node, err := collectNode(o)
 		errs = append(errs, err)
 		nl = append(nl, node)
 	}
@@ -29,7 +29,7 @@ func CollectNodes(cs *ck.Clientset, i *inventory.Inventory) error {
 	return errors.Join(errs...)
 }
 
-func CollectNode(o v1.Node) (*inventory.Node, error) {
+func collectNode(o v1.Node) (*inventory.Node, error) {
 	r := inventory.NewNode()
 
 	labels := o.GetLabels()
@@ -108,7 +108,6 @@ func parseContainerRuntimeVersion(criVersion string) (name string, version strin
 		return "", criVersion
 	}
 	return url.Scheme, url.Host
-
 }
 
 func providerNameFromProviderID(providerID string) string {

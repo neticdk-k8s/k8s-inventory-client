@@ -14,65 +14,8 @@ metadata:
     app.kubernetes.io/instance: k8s-inventory-client
     app.kubernetes.io/managed-by: kustomize
 rules:
-  - apiGroups:
-      - ""
-      - apps
-      - autoscaling
-      - cert-manager.io
-      - batch
-      - core
-      - extensions
-      - external-secrets.io
-      - policy
-      - rbac.authorization.k8s.io
-      - helm.toolkit.fluxcd.io
-      - kci.rocks
-      - kustomize.toolkit.fluxcd.io
-      - monitoring.coreos.com
-      - networking.k8s.io
-      - project.tcs.trifork.com
-      - crd.projectcalico.org
-      - projectcontour.io
-      - rabbitmq.com
-      - source.toolkit.fluxcd.io
-      - storage.k8s.io
-      - velero.io
-    resources:
-      - backups
-      - bootstrapconfigs
-      - clusterinformations
-      - configmaps
-      - cronjobs
-      - daemonsets
-      - databases
-      - dbinstances
-      - deployments
-      - endpoints
-      - gitrepositories
-      - helmcharts
-      - helmreleases
-      - helmrepositories
-      - httpproxies
-      - ingresses
-      - issuers
-      - jobs
-      - kustomizations
-      - namespaceconfigs
-      - namespaces
-      - networkpolicies
-      - nodes
-      - persistentvolumeclaims
-      - persistentvolumes
-      - pods
-      - projectbootstraps
-      - prometheuses
-      - rabbitmqclusters
-      - replicasets
-      - schedules
-      - services
-      - secretstores
-      - statefulsets
-      - storageclasses
+  - apiGroups: ["*"]
+    resources: ["*"]
     verbs:
       - get
       - list
@@ -112,9 +55,31 @@ spec:
       port: 8087
       protocol: TCP
       targetPort: 8087
+    - name: meta
+      port: 8088
+      protocol: TCP
+      targetPort: 8088
   selector:
     app.kubernetes.io/name: k8s-inventory-client
     app.kubernetes.io/instance: k8s-inventory-client
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-inventory-metadata
+  namespace: netic-metadata-system
+spec:
+  ingress:
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - name: meta
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: k8s-inventory-client
+  policyTypes:
+    - Ingress
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -148,18 +113,24 @@ spec:
           ports:
             - containerPort: 8087
               name: http
+            - containerPort: 8088
+              name: meta
           resources:
             requests:
               cpu: "10m"
-              memory: "100Mi"
+              memory: "160Mi"
             limits:
               cpu: "50m"
-              memory: "100Mi"
+              memory: "256Mi"
           env:
+            - name: LOG_LEVEL
+              value: debug
             - name: COLLECT_INTERVAL
               value: 30m
-            - name: UPLOAD_INVENTORY
-              value: "false"
+          volumeMounts:
+            - name: certificate
+              mountPath: /etc/certificates
+              readOnly: true
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
@@ -167,3 +138,8 @@ spec:
             capabilities:
               drop:
                 - all
+      priorityClassName: "secure-cloud-stack-technical-management-critical"
+      volumes:
+        - name: certificate
+          secret:
+            secretName: k8s-inventory-client-certificate

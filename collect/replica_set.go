@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectReplicaSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectReplicaSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	rsets := make([]*inventory.Workload, 0)
 
 	replicaSetList, err := cs.AppsV1().
@@ -23,14 +23,14 @@ func CollectReplicaSets(cs *ck.Clientset, client client.Client) ([]*inventory.Wo
 	}
 	var errs []error
 	for _, o := range replicaSetList.Items {
-		rset, err := CollectReplicaSet(client, o)
+		rset, err := collectReplicaSet(client, o)
 		errs = append(errs, err)
 		rsets = append(rsets, rset)
 	}
 	return rsets, errors.Join(errs...)
 }
 
-func CollectReplicaSet(client client.Client, o v1.ReplicaSet) (*inventory.Workload, error) {
+func collectReplicaSet(client client.Client, o v1.ReplicaSet) (*inventory.Workload, error) {
 	r := inventory.NewReplicaSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

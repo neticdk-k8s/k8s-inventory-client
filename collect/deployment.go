@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectDeployments(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectDeployments(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	deployments := make([]*inventory.Workload, 0)
 	deploymentList, err := cs.AppsV1().
 		Deployments("").
@@ -23,14 +23,14 @@ func CollectDeployments(cs *ck.Clientset, client client.Client) ([]*inventory.Wo
 	}
 	var errs []error
 	for _, o := range deploymentList.Items {
-		deployment, err := CollectDeployment(client, o)
+		deployment, err := collectDeployment(client, o)
 		errs = append(errs, err)
 		deployments = append(deployments, deployment)
 	}
 	return deployments, errors.Join(errs...)
 }
 
-func CollectDeployment(client client.Client, o v1.Deployment) (*inventory.Workload, error) {
+func collectDeployment(client client.Client, o v1.Deployment) (*inventory.Workload, error) {
 	r := inventory.NewDeployment()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

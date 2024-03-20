@@ -15,22 +15,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectCronJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectCronJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
-	v1Jobs, v1Err := CollectCronJobsV1(cs, client)
+	v1Jobs, v1Err := collectCronJobsV1(cs, client)
 	cjs = append(cjs, v1Jobs...)
 	var (
 		v1BetaErr  error
 		v1BetaJobs []*inventory.Workload
 	)
 	if len(cjs) == 0 {
-		v1BetaJobs, v1BetaErr = CollectCronJobsV1beta1(cs, client)
+		v1BetaJobs, v1BetaErr = collectCronJobsV1beta1(cs, client)
 		cjs = append(cjs, v1BetaJobs...)
 	}
 	return cjs, errors.Join(v1Err, v1BetaErr)
 }
 
-func CollectCronJobsV1beta1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectCronJobsV1beta1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1beta1().
 		CronJobs("").
@@ -40,14 +40,14 @@ func CollectCronJobsV1beta1(cs *ck.Clientset, client client.Client) ([]*inventor
 	}
 	var errs []error
 	for _, o := range cronJobList.Items {
-		cj, err := CollectCronJob(inventory.NewCronJob(), client, o)
+		cj, err := collectCronJob(inventory.NewCronJob(), client, o)
 		errs = append(errs, err)
 		cjs = append(cjs, cj)
 	}
 	return cjs, errors.Join(errs...)
 }
 
-func CollectCronJobsV1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectCronJobsV1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1().
 		CronJobs("").
@@ -57,26 +57,26 @@ func CollectCronJobsV1(cs *ck.Clientset, client client.Client) ([]*inventory.Wor
 	}
 	var errs []error
 	for _, o := range cronJobList.Items {
-		cj, err := CollectCronJob(inventory.NewCronJob(), client, o)
+		cj, err := collectCronJob(inventory.NewCronJob(), client, o)
 		errs = append(errs, err)
 		cjs = append(cjs, cj)
 	}
 	return cjs, errors.Join(errs...)
 }
 
-func CollectCronJob(cj *inventory.Workload, client client.Client, o interface{}) (*inventory.Workload, error) {
+func collectCronJob(cj *inventory.Workload, client client.Client, o interface{}) (*inventory.Workload, error) {
 	switch obj := o.(type) {
 	case v1beta1.CronJob:
-		return CollectCronJobV1Beta1(obj, client)
+		return collectCronJobV1Beta1(obj, client)
 	case v1.CronJob:
-		return CollectCronJobV1(obj, client)
+		return collectCronJobV1(obj, client)
 	default:
 		log.Warn().Msgf("api/resource: %v not supported", obj)
 	}
 	return cj, nil
 }
 
-func CollectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, error) {
+func collectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, error) {
 	r := inventory.NewCronJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -104,7 +104,7 @@ func CollectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, 
 	return r, nil
 }
 
-func CollectCronJobV1Beta1(o v1beta1.CronJob, client client.Client) (*inventory.Workload, error) {
+func collectCronJobV1Beta1(o v1beta1.CronJob, client client.Client) (*inventory.Workload, error) {
 	r := inventory.NewCronJob()
 	r.APIVersion = "v1beta1"
 
