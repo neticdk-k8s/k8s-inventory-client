@@ -7,7 +7,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectRabbitMQClusters(cs *ck.Clientset) ([]*inventory.RabbitMQCluster, error) {
+func collectRabbitMQClusters(cs *ck.Clientset) ([]*inventory.RabbitMQCluster, error) {
 	rmqClusters := make([]*inventory.RabbitMQCluster, 0)
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/rabbitmq.com/v1beta1/rabbitmqclusters")
 	if err != nil {
@@ -21,12 +21,12 @@ func CollectRabbitMQClusters(cs *ck.Clientset) ([]*inventory.RabbitMQCluster, er
 		return nil, err
 	}
 	for _, o := range clusters.Items {
-		rmqClusters = append(rmqClusters, CollectRabbitMQCluster(o))
+		rmqClusters = append(rmqClusters, collectRabbitMQCluster(o))
 	}
 	return rmqClusters, nil
 }
 
-func CollectRabbitMQCluster(o rmqapi.RabbitmqCluster) *inventory.RabbitMQCluster {
+func collectRabbitMQCluster(o rmqapi.RabbitmqCluster) *inventory.RabbitMQCluster {
 	r := inventory.NewRabbitMQCluster()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

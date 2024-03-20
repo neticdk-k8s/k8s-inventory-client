@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	jobs := make([]*inventory.Workload, 0)
 	options := metav1.ListOptions{Limit: 500}
 	var errs []error
@@ -33,7 +33,7 @@ func CollectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload,
 					}
 				}
 			}
-			job, err := CollectJob(client, o)
+			job, err := collectJob(client, o)
 			errs = append(errs, err)
 			jobs = append(jobs, job)
 		}
@@ -45,7 +45,7 @@ func CollectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload,
 	return jobs, errors.Join(errs...)
 }
 
-func CollectJob(client client.Client, o v1.Job) (*inventory.Workload, error) {
+func collectJob(client client.Client, o v1.Job) (*inventory.Workload, error) {
 	r := inventory.NewJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

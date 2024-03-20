@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectPods(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectPods(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	pods := make([]*inventory.Workload, 0)
 	options := metav1.ListOptions{Limit: 500}
 	var errs []error
@@ -25,7 +25,7 @@ func CollectPods(cs *ck.Clientset, client client.Client) ([]*inventory.Workload,
 			errs = append(errs, fmt.Errorf("getting Pods: %v", err))
 		}
 		for _, o := range podList.Items {
-			pod, err := CollectPod(client, o)
+			pod, err := collectPod(client, o)
 			errs = append(errs, err)
 			pods = append(pods, pod)
 		}
@@ -37,7 +37,7 @@ func CollectPods(cs *ck.Clientset, client client.Client) ([]*inventory.Workload,
 	return pods, errors.Join(errs...)
 }
 
-func CollectPod(client client.Client, o v1.Pod) (*inventory.Workload, error) {
+func collectPod(client client.Client, o v1.Pod) (*inventory.Workload, error) {
 	r := inventory.NewPod()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

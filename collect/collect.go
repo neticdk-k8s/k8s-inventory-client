@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
@@ -23,19 +24,20 @@ import (
 )
 
 // How often to collect
-const DefaultCollectionInterval = "1h"
+const defaultCollectionInterval = "1h"
 
 type InventoryCollection struct {
-	Inventory          *inventory.Inventory
-	CollectionInterval string
-	UploadInventory    bool
-	Impersonate        string
-	ServerAPIEndpoint  string
-	TLSCrt             string
-	TLSKey             string
-	AuthEnabled        bool
-	Signer             jose.Signer
-	MetaData           *metaData
+	mu                 sync.RWMutex
+	inventory          *inventory.Inventory
+	collectionInterval string
+	uploadInventory    bool
+	impersonate        string
+	serverAPIEndpoint  string
+	tlsCrt             string
+	tlsKey             string
+	authEnabled        bool
+	signer             jose.Signer
+	metaData           *metaData
 }
 
 type metaData struct {
@@ -78,41 +80,41 @@ type uploadResponse struct {
 
 func NewInventoryCollection(cfg config.Config) *InventoryCollection {
 	i := &InventoryCollection{
-		CollectionInterval: cfg.CollectionInterval,
-		UploadInventory:    cfg.UploadInventory,
-		Impersonate:        cfg.Impersonate,
-		ServerAPIEndpoint:  fmt.Sprintf("%s/api/v1/inventory", cfg.ServerAPIEndpoint),
-		TLSCrt:             cfg.TLSCrt,
-		TLSKey:             cfg.TLSKey,
-		AuthEnabled:        cfg.AuthEnabled,
-		MetaData:           &metaData{},
+		collectionInterval: cfg.CollectionInterval,
+		uploadInventory:    cfg.UploadInventory,
+		impersonate:        cfg.Impersonate,
+		serverAPIEndpoint:  fmt.Sprintf("%s/api/v1/inventory", cfg.ServerAPIEndpoint),
+		tlsCrt:             cfg.TLSCrt,
+		tlsKey:             cfg.TLSKey,
+		authEnabled:        cfg.AuthEnabled,
+		metaData:           &metaData{},
 	}
-	if !i.AuthEnabled {
+	if !i.authEnabled {
 		log.Info().Msg("Authentication disabled")
 		return i
 	}
-	if i.TLSCrt == "" {
+	if i.tlsCrt == "" {
 		log.Info().Msg("No TLSCrt set. Authentication disabled")
-		i.AuthEnabled = false
+		i.authEnabled = false
 		return i
 	}
-	if i.TLSKey == "" {
+	if i.tlsKey == "" {
 		log.Error().Msg("No TLSKey set. Authentication disbaled.")
-		i.AuthEnabled = false
+		i.authEnabled = false
 		return i
 	}
-	if _, err := os.Stat(filepath.Clean(i.TLSCrt)); errors.Is(err, os.ErrNotExist) {
-		log.Error().Msgf("TLSCrt file '%s' not found. Authentication disbaled.", i.TLSCrt)
-		i.AuthEnabled = false
+	if _, err := os.Stat(filepath.Clean(i.tlsCrt)); errors.Is(err, os.ErrNotExist) {
+		log.Error().Msgf("TLSCrt file '%s' not found. Authentication disbaled.", i.tlsCrt)
+		i.authEnabled = false
 		return i
 	}
-	if _, err := os.Stat(filepath.Clean(i.TLSKey)); errors.Is(err, os.ErrNotExist) {
-		log.Error().Msgf("TLSKey file '%s' not found. Authentication disbaled.", i.TLSKey)
-		i.AuthEnabled = false
+	if _, err := os.Stat(filepath.Clean(i.tlsKey)); errors.Is(err, os.ErrNotExist) {
+		log.Error().Msgf("TLSKey file '%s' not found. Authentication disbaled.", i.tlsKey)
+		i.authEnabled = false
 		return i
 	}
 	log.Info().Msg("Authentication enabled")
-	i.AuthEnabled = true
+	i.authEnabled = true
 	i.refreshCertificates()
 	return i
 }
@@ -125,7 +127,7 @@ func (c *InventoryCollection) refreshCertificates() {
 		c.refreshCertificates()
 	}
 
-	certificates, key, err := readKeyAndCertificates(c.TLSCrt, c.TLSKey)
+	certificates, key, err := readKeyAndCertificates(c.tlsCrt, c.tlsKey)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to read certificates")
 		go reschedule(2 * time.Minute)
@@ -139,7 +141,7 @@ func (c *InventoryCollection) refreshCertificates() {
 		go reschedule(2 * time.Minute)
 		return
 	}
-	c.Signer = signer
+	c.signer = signer
 
 	if len(certificates) > 0 {
 		d := time.Until(certificates[0].NotAfter)
@@ -186,12 +188,12 @@ func readKeyAndCertificates(certFile, keyFile string) ([]*x509.Certificate, any,
 }
 
 func (c *InventoryCollection) Collect() {
-	r, err := time.ParseDuration(c.CollectionInterval)
+	r, err := time.ParseDuration(c.collectionInterval)
 	if err != nil {
-		log.Warn().Err(err).Str("interval", c.CollectionInterval).Msg("parsing refresh interval")
-		r, err = time.ParseDuration(DefaultCollectionInterval)
+		log.Warn().Err(err).Str("interval", c.collectionInterval).Msg("parsing refresh interval")
+		r, err = time.ParseDuration(defaultCollectionInterval)
 		if err != nil {
-			log.Fatal().Err(err).Str("interval", DefaultCollectionInterval).Msg("parsing refresh interval")
+			log.Fatal().Err(err).Str("interval", defaultCollectionInterval).Msg("parsing refresh interval")
 		}
 	}
 
@@ -203,45 +205,45 @@ func (c *InventoryCollection) Collect() {
 
 	log.Info().Msg("entering inventory collection loop")
 	for {
-		c.Inventory = inventory.NewInventory()
-		c.Inventory.CollectionSucceeded = true
-		c.Inventory.ClientVersion = version.VERSION
-		c.Inventory.ClientCommit = version.COMMIT
-		cs, client, err := kubernetes.CreateK8SClient(c.Impersonate)
+		c.inventory = inventory.NewInventory()
+		c.inventory.CollectionSucceeded = true
+		c.inventory.ClientVersion = version.VERSION
+		c.inventory.ClientCommit = version.COMMIT
+		cs, client, err := kubernetes.CreateK8SClient(c.impersonate)
 		if err != nil {
 			log.Error().Err(err).Msg("creating clientset")
-			c.Inventory.CollectionSucceeded = false
-			c.Inventory.CollectionErrors = append(c.Inventory.CollectionErrors, err.Error())
+			c.inventory.CollectionSucceeded = false
+			c.inventory.CollectionErrors = append(c.inventory.CollectionErrors, err.Error())
 			sleepNext()
 			continue
 		}
 
 		log.Debug().Str("collect", "cluster").Msg("")
-		c.handleError(CollectCluster(cs, c.Inventory))
+		c.handleError(collectCluster(cs, c.inventory))
 
 		log.Debug().Str("collect", "scs").Msg("")
-		c.handleError(CollectSCSMetadata(cs, c.Inventory))
+		c.handleError(collectSCSMetadata(cs, c.inventory))
 
 		log.Debug().Str("collect", "namespace").Msg("")
-		c.handleError(CollectNamespaces(cs, c.Inventory))
+		c.handleError(collectNamespaces(cs, c.inventory))
 
 		log.Debug().Str("collect", "node").Msg("")
-		c.handleError(CollectNodes(cs, c.Inventory))
+		c.handleError(collectNodes(cs, c.inventory))
 
 		log.Debug().Str("collect", "storage").Msg("")
-		c.handleError(CollectStorage(cs, c.Inventory))
+		c.handleError(collectStorage(cs, c.inventory))
 
 		log.Debug().Str("collect", "network_policy").Msg("")
-		c.handleError(CollectNetworkPolicies(cs, c.Inventory))
+		c.handleError(collectNetworkPolicies(cs, c.inventory))
 
 		log.Debug().Str("collect", "components").Msg("")
-		c.handleError(CollectCustomResources(cs, c.Inventory))
+		c.handleError(collectCustomResources(cs, c.inventory))
 
 		log.Debug().Str("collect", "workload").Msg("")
-		c.handleError(CollectWorkloads(cs, client, c.Inventory))
+		c.handleError(collectWorkloads(cs, client, c.inventory))
 
-		if c.UploadInventory {
-			if err := c.Upload(); err != nil {
+		if c.uploadInventory {
+			if err := c.upload(); err != nil {
 				log.Error().Stack().Err(err).Msg("uplading inventory")
 			}
 		}
@@ -250,7 +252,7 @@ func (c *InventoryCollection) Collect() {
 	}
 }
 
-func (c *InventoryCollection) Upload() error {
+func (c *InventoryCollection) upload() error {
 	log.Info().Msg("uploading inventory")
 
 	var (
@@ -259,13 +261,13 @@ func (c *InventoryCollection) Upload() error {
 		contentType string = "application/json; charset=UTF-8"
 	)
 
-	payload, err = json.Marshal(c.Inventory)
+	payload, err = json.Marshal(c.inventory)
 	if err != nil {
 		return errors.Wrap(err, "marshaling inventory")
 	}
 
-	if c.AuthEnabled {
-		jws, err := c.Signer.Sign(payload)
+	if c.authEnabled {
+		jws, err := c.signer.Sign(payload)
 		if err != nil {
 			return errors.Wrap(err, "signing inventory")
 		}
@@ -282,7 +284,7 @@ func (c *InventoryCollection) Upload() error {
 		return errors.Wrap(err, "compressiong payload")
 	}
 
-	req, err := http.NewRequest("PUT", c.ServerAPIEndpoint, &gzippedBuf)
+	req, err := http.NewRequest("PUT", c.serverAPIEndpoint, &gzippedBuf)
 	if err != nil {
 		return errors.Wrap(err, "creating request")
 	}
@@ -296,57 +298,55 @@ func (c *InventoryCollection) Upload() error {
 	}
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Error().Err(err).Int("status", res.StatusCode).Msg("reading response")
-		return errors.Wrap(err, "reading response")
-	}
-
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Error().Err(err).Int("status", res.StatusCode).Msg("reading response")
+			return errors.Wrap(err, "reading response")
+		}
 		log.Error().Int("status", res.StatusCode).Str("body", string(body)).Msg("")
 		return errors.New("upload failed")
 	}
 
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	metaDataResponse := &uploadResponse{}
-	if err := json.Unmarshal(body, metaDataResponse); err != nil {
+	if err := json.NewDecoder(res.Body).Decode(metaDataResponse); err != nil {
 		return errors.Wrap(err, "unmarshal response")
 	}
 	t := time.Now()
-	c.MetaData.Updated = &t
-	c.MetaData.Cluster = &metaDataResponse.Cluster
-	c.MetaData.MetaData = &metaDataResponse.MetaData
+	c.metaData.Updated = &t
+	c.metaData.Cluster = &metaDataResponse.Cluster
+	c.metaData.MetaData = &metaDataResponse.MetaData
 
-	log.Info().Str("fqdn", c.Inventory.Cluster.Name).Int("status", res.StatusCode).Msg("uploaded inventory")
+	log.Info().Str("fqdn", c.inventory.Cluster.Name).Int("status", res.StatusCode).Msg("uploaded inventory")
 
 	return nil
 }
 
 func (c *InventoryCollection) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	viJSON, err := json.Marshal(c.Inventory)
+	defer r.Body.Close()
+	err := json.NewEncoder(w).Encode(c.inventory)
 	if err != nil {
-		panic(err)
-	}
-	_, err = w.Write(viJSON)
-	if err != nil {
-		panic(err)
+		http.Error(w, errHTTPInternalError.JSON(), http.StatusInternalServerError)
+		return
 	}
 }
 
 func (c *InventoryCollection) ServeHTTPMeta(w http.ResponseWriter, r *http.Request) {
-	metaJSON, err := json.Marshal(c.MetaData)
+	defer r.Body.Close()
+	err := json.NewEncoder(w).Encode(c.metaData)
 	if err != nil {
-		panic(err)
-	}
-	_, err = w.Write(metaJSON)
-	if err != nil {
-		panic(err)
+		http.Error(w, errHTTPInternalError.JSON(), http.StatusInternalServerError)
+		return
 	}
 }
 
 func (c *InventoryCollection) handleError(err error) {
 	if err != nil {
-		c.Inventory.CollectionSucceeded = false
-		c.Inventory.CollectionErrors = append(c.Inventory.CollectionErrors, err.Error())
+		c.inventory.CollectionSucceeded = false
+		c.inventory.CollectionErrors = append(c.inventory.CollectionErrors, err.Error())
 		log.Error().Stack().Err(err).Msg("")
 	}
 }

@@ -7,7 +7,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectVeleroBackups(cs *ck.Clientset) ([]*inventory.VeleroBackup, error) {
+func collectVeleroBackups(cs *ck.Clientset) ([]*inventory.VeleroBackup, error) {
 	veleroBackups := make([]*inventory.VeleroBackup, 0)
 
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/velero.io/v1/backups")
@@ -54,7 +54,7 @@ func CollectVeleroBackups(cs *ck.Clientset) ([]*inventory.VeleroBackup, error) {
 	return veleroBackups, nil
 }
 
-func CollectVeleroSchedules(cs *ck.Clientset) ([]*inventory.VeleroSchedule, error) {
+func collectVeleroSchedules(cs *ck.Clientset) ([]*inventory.VeleroSchedule, error) {
 	veleroSchedules := make([]*inventory.VeleroSchedule, 0)
 
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/velero.io/v1/schedules")

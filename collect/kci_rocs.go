@@ -7,7 +7,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectKCIRocksDBInstances(cs *ck.Clientset) ([]*inventory.KCIRocksDBInstance, error) {
+func collectKCIRocksDBInstances(cs *ck.Clientset) ([]*inventory.KCIRocksDBInstance, error) {
 	instances := make([]*inventory.KCIRocksDBInstance, 0)
 	res, found, err := kubernetes.GetK8SRESTResource(cs, "/apis/kci.rocks/v1alpha1/dbinstances")
 	if err != nil {
@@ -21,12 +21,12 @@ func CollectKCIRocksDBInstances(cs *ck.Clientset) ([]*inventory.KCIRocksDBInstan
 		return nil, err
 	}
 	for _, o := range dbInstances.Items {
-		instances = append(instances, CollectKCIRocksDBInstance(o))
+		instances = append(instances, collectKCIRocksDBInstance(o))
 	}
 	return instances, nil
 }
 
-func CollectKCIRocksDBInstance(o dboperatorapi.DbInstance) *inventory.KCIRocksDBInstance {
+func collectKCIRocksDBInstance(o dboperatorapi.DbInstance) *inventory.KCIRocksDBInstance {
 	r := inventory.NewKCIRocksDBInstance()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

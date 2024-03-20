@@ -11,7 +11,7 @@ import (
 	ck "k8s.io/client-go/kubernetes"
 )
 
-func CollectNetworkPolicies(cs *ck.Clientset, i *inventory.Inventory) error {
+func collectNetworkPolicies(cs *ck.Clientset, i *inventory.Inventory) error {
 	npl := make([]*inventory.NetworkPolicy, 0)
 	networkPolicies, err := cs.NetworkingV1().NetworkPolicies("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
@@ -19,7 +19,7 @@ func CollectNetworkPolicies(cs *ck.Clientset, i *inventory.Inventory) error {
 	}
 	var errs []error
 	for _, o := range networkPolicies.Items {
-		np, err := CollectNetworkPolicy(o)
+		np, err := collectNetworkPolicy(o)
 		errs = append(errs, err)
 		npl = append(npl, np)
 	}
@@ -27,7 +27,7 @@ func CollectNetworkPolicies(cs *ck.Clientset, i *inventory.Inventory) error {
 	return errors.Join(errs...)
 }
 
-func CollectNetworkPolicy(o v1.NetworkPolicy) (*inventory.NetworkPolicy, error) {
+func collectNetworkPolicy(o v1.NetworkPolicy) (*inventory.NetworkPolicy, error) {
 	r := inventory.NewNetworkPolicy()
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
 

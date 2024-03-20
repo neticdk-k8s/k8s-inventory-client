@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectDaemonSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectDaemonSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	dsets := make([]*inventory.Workload, 0)
 
 	daemonSetList, err := cs.AppsV1().
@@ -23,14 +23,14 @@ func CollectDaemonSets(cs *ck.Clientset, client client.Client) ([]*inventory.Wor
 	}
 	var errs []error
 	for _, o := range daemonSetList.Items {
-		dset, err := CollectDaemonSet(client, o)
+		dset, err := collectDaemonSet(client, o)
 		errs = append(errs, err)
 		dsets = append(dsets, dset)
 	}
 	return dsets, errors.Join(errs...)
 }
 
-func CollectDaemonSet(client client.Client, o v1.DaemonSet) (*inventory.Workload, error) {
+func collectDaemonSet(client client.Client, o v1.DaemonSet) (*inventory.Workload, error) {
 	r := inventory.NewDaemonSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)

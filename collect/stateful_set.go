@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CollectStatefulSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectStatefulSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	ssets := make([]*inventory.Workload, 0)
 
 	statefulSetList, err := cs.AppsV1().
@@ -23,14 +23,14 @@ func CollectStatefulSets(cs *ck.Clientset, client client.Client) ([]*inventory.W
 	}
 	var errs []error
 	for _, o := range statefulSetList.Items {
-		sset, err := CollectStatefulSet(client, o)
+		sset, err := collectStatefulSet(client, o)
 		errs = append(errs, err)
 		ssets = append(ssets, sset)
 	}
 	return ssets, errors.Join(errs...)
 }
 
-func CollectStatefulSet(client client.Client, o v1.StatefulSet) (*inventory.Workload, error) {
+func collectStatefulSet(client client.Client, o v1.StatefulSet) (*inventory.Workload, error) {
 	r := inventory.NewStatefulSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
