@@ -55,9 +55,31 @@ spec:
       port: 8087
       protocol: TCP
       targetPort: 8087
+    - name: meta
+      port: 8088
+      protocol: TCP
+      targetPort: 8088
   selector:
     app.kubernetes.io/name: k8s-inventory-client
     app.kubernetes.io/instance: k8s-inventory-client
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-inventory-metadata
+  namespace: netic-metadata-system
+spec:
+  ingress:
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - name: meta
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: k8s-inventory-client
+  policyTypes:
+    - Ingress
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -91,6 +113,8 @@ spec:
           ports:
             - containerPort: 8087
               name: http
+            - containerPort: 8088
+              name: meta
           resources:
             requests:
               cpu: "10m"

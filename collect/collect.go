@@ -35,6 +35,45 @@ type InventoryCollection struct {
 	TLSKey             string
 	AuthEnabled        bool
 	Signer             jose.Signer
+	MetaData           *metaData
+}
+
+type metaData struct {
+	Updated  *time.Time              `json:"updated,omitempty"`
+	Cluster  *uploadResponseCluster  `json:"cluster,omitempty"`
+	MetaData *uploadResponseMetaData `json:"meta_data,omitempty"`
+}
+
+type uploadResponseCluster struct {
+	Name         string `json:"name,omitempty"`
+	OperatorName string `json:"operator_name,omitempty"`
+	ProviderName string `json:"provider_name,omitempty"`
+	ID           string `json:"id,omitempty"`
+}
+
+type uploadResponseServiceLevel struct {
+	HasTechnicalOperations   *bool  `json:"has_technical_operations,omitempty"`
+	HasTechnicalManagement   *bool  `json:"has_technical_management,omitempty"`
+	HasApplicationOperations *bool  `json:"has_application_operations,omitempty"`
+	HasApplicationManagement *bool  `json:"has_application_management,omitempty"`
+	HasCustomOperations      *bool  `json:"has_custom_operations,omitempty"`
+	CustomOperationsURL      string `json:"custom_operations_url,omitempty"`
+}
+
+type uploadResponseMetaData struct {
+	ClusterType            string                     `json:"cluster_type,omitempty"`
+	Description            string                     `json:"description,omitempty"`
+	EnvironmentName        string                     `json:"environment_name,omitempty"`
+	InfrastructureProvider string                     `json:"infrastructure_provider,omitempty"`
+	ResilienceZone         string                     `json:"resilience_zone,omitempty"`
+	ServiceLevel           uploadResponseServiceLevel `json:"service_level,omitempty"`
+	SubscriptionID         string                     `json:"subscription_id,omitempty"`
+}
+
+type uploadResponse struct {
+	Cluster  uploadResponseCluster  `json:"cluster"`
+	MetaData uploadResponseMetaData `json:"meta_data"`
+	Message  string                 `json:"message,omitempty"`
 }
 
 func NewInventoryCollection(cfg config.Config) *InventoryCollection {
@@ -46,6 +85,7 @@ func NewInventoryCollection(cfg config.Config) *InventoryCollection {
 		TLSCrt:             cfg.TLSCrt,
 		TLSKey:             cfg.TLSKey,
 		AuthEnabled:        cfg.AuthEnabled,
+		MetaData:           &metaData{},
 	}
 	if !i.AuthEnabled {
 		log.Info().Msg("Authentication disabled")
@@ -256,15 +296,25 @@ func (c *InventoryCollection) Upload() error {
 	}
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Error().Err(err).Int("status", res.StatusCode).Msg("reading response")
+		return errors.Wrap(err, "reading response")
+	}
+
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			log.Error().Err(err).Int("status", res.StatusCode).Msg("reading response")
-			return errors.Wrap(err, "reading response")
-		}
 		log.Error().Int("status", res.StatusCode).Str("body", string(body)).Msg("")
 		return errors.New("upload failed")
 	}
+
+	metaDataResponse := &uploadResponse{}
+	if err := json.Unmarshal(body, metaDataResponse); err != nil {
+		return errors.Wrap(err, "unmarshal response")
+	}
+	t := time.Now()
+	c.MetaData.Updated = &t
+	c.MetaData.Cluster = &metaDataResponse.Cluster
+	c.MetaData.MetaData = &metaDataResponse.MetaData
 
 	log.Info().Str("fqdn", c.Inventory.Cluster.Name).Int("status", res.StatusCode).Msg("uploaded inventory")
 
@@ -277,6 +327,17 @@ func (c *InventoryCollection) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		panic(err)
 	}
 	_, err = w.Write(viJSON)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (c *InventoryCollection) ServeHTTPMeta(w http.ResponseWriter, r *http.Request) {
+	metaJSON, err := json.Marshal(c.MetaData)
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(metaJSON)
 	if err != nil {
 		panic(err)
 	}

@@ -35,11 +35,20 @@ func main() {
 
 	go collection.Collect()
 
-	http.Handle("/api/v1/inventory", collection)
+	http.Handle("/", collection)
+
+	metaHandler := http.NewServeMux()
+	metaHandler.HandleFunc("/", collection.ServeHTTPMeta)
+
+	go func() {
+		log.Info().Str("portMeta", cfg.HTTPPortMeta).Msg("starting metadata server")
+		if err := http.ListenAndServe(":"+cfg.HTTPPortMeta, metaHandler); err != nil {
+			log.Fatal().Err(err).Msg("")
+		}
+	}()
 
 	log.Info().Str("port", cfg.HTTPPort).Msg("starting server")
-	err := http.ListenAndServe(":"+cfg.HTTPPort, nil)
-	if err != nil {
+	if err := http.ListenAndServe(":"+cfg.HTTPPort, nil); err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
 }

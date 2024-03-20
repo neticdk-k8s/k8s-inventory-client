@@ -15,6 +15,7 @@ type Config struct {
 	Impersonate        string `env:"IMPERSONATE"`
 	ServerAPIEndpoint  string `env:"SERVER_API_ENDPOINT,default=http://localhost:8086"`
 	HTTPPort           string `env:"HTTP_PORT,default=8087"`
+	HTTPPortMeta       string `env:"HTTP_PORT_META,default=8088"`
 	TLSCrt             string `env:"TLS_CRT,default=/etc/certificates/tls.crt"`
 	TLSKey             string `env:"TLS_KEY,default=/etc/certificates/tls.key"`
 	AuthEnabled        bool   `env:"AUTH_ENABLED,default=true"`
