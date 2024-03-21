@@ -42,7 +42,7 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
-  name: k8s-inventory-client
+  name: metadata
   namespace: netic-metadata-system
   labels:
     app.kubernetes.io/name: k8s-inventory-client
@@ -52,13 +52,9 @@ spec:
   type: ClusterIP
   ports:
     - name: http
-      port: 8087
+      port: 80
       protocol: TCP
-      targetPort: 8087
-    - name: meta
-      port: 8088
-      protocol: TCP
-      targetPort: 8088
+      targetPort: meta
   selector:
     app.kubernetes.io/name: k8s-inventory-client
     app.kubernetes.io/instance: k8s-inventory-client
@@ -73,7 +69,7 @@ spec:
     - from:
         - namespaceSelector: {}
       ports:
-        - name: meta
+        - port: 8088
           protocol: TCP
   podSelector:
     matchLabels:
