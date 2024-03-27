@@ -42,6 +42,12 @@ echo "Updating helm chart appVersion..."
 	git commit -m "chore: upgrade chart appVersion to ${next_version}" chart/Chart.yaml
 )
 
+echo "Pushing release..."
+(
+	cd "${SCRIPT_DIR}/.."
+	git push
+)
+
 echo "Tagging release..."
 (
 	cd "${SCRIPT_DIR}/.."
