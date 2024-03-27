@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chart.fullname" . }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "chart.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DEBUG
+              value: "{{ .Values.debugEnabled }}"
+            - name: AUTH_ENABLED
+              value: "{{ .Values.authEnabled }}"
+            - name: LOG_LEVEL
+              value: "{{ .Values.logLevel }}"
+            - name: LOG_FORMATTER
+              value: "{{ .Values.logFormatter }}"
+            - name: COLLECT_INTERVAL
+              value: "{{ .Values.collectInterval }}"
+            - name: HTTP_PORT
+              value: "{{ .Values.httpPort }}"
+            - name: HTTP_PORT_META
+              value: "{{ .Values.httpPortMeta }}"
+            - name: SERVER_API_ENDPOINT
+              value: "{{ .Values.serverAPIEndPoint }}"
+            - name: UPLOAD_INVENTORY
+              value: "{{ .Values.uploadInventory }}"
+          ports:
+            - containerPort: {{ .Values.httpPort | int }}
+              name: http
+            - containerPort: {{ .Values.httpPortMeta | int }}
+              name: meta
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.authEnabled -}}
+          {{- with .Values.volumeMounts }}
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - all
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+      serviceAccountName: {{ include "chart.serviceAccountName" . }}
+      {{- if .Values.enablePriorityClass -}}
+      priorityClassName: "{{ .Values.priorityClassName }}"
+      {{- end }}
+      {{- if .Values.authEnabled -}}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}

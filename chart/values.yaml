@@ -1,0 +1,83 @@
+---
+image:
+  repository: "ghcr.io/neticdk-k8s/k8s-inventory-client"
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: "k8s-inventory-client"
+
+# enablePriorityClass -- Enables PriorityClass for the pod.
+enablePriorityClass: false
+# priorityClassName -- The name of the PriorityClass to use.
+priorityClassName: secure-cloud-stack-technical-management-critical
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: "10m"
+    memory: "160Mi"
+  limits:
+    cpu: "50m"
+    memory: "256Mi"
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: meta
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: meta
+
+# volumeMounts -- Volumes to expose to the container. The certificate secret is
+# required for authentication.
+volumes:
+  - name: certificate
+    secret:
+      secretName: k8s-inventory-client-certificate
+
+# volumeMounts -- Volumes to mount. The certificate is required for
+# authentication.
+volumeMounts:
+  - name: certificate
+    mountPath: /etc/certificates
+    readOnly: true
+
+# createClusterIDConfigMap -- Whether to create the cluster-id ConfigMap
+createClusterIDConfigMap: false
+# clusterIDConfigMap -- The keys and values used in the cluster-id Config
+clusterIDConfigMap:
+  providerName: myprovider
+  clusterName: prod999
+  clusterFQDN: prod999.myprovider.k8s.netic.dk
+# httpPort -- The port to listen on for dumping the current inventory
+httpPort: 8087
+# httpPortMeta - The port to listen on for the metadata API
+httpPortMeta: 8088
+# debugEnabled -- Whether debug mode is enabled
+debugEnabled: "false"
+# authEnabled -- Whetherauthentication towards the inventory server is enabled.
+# Enabling authentication also creates mounts the certificate volume.
+authEnabled: "true"
+# logLevel -- The logging level
+logLevel: "info"
+# logFormatter -- The logging formatter ("json" or "text")
+logFormatter: "json"
+# collectInterval -- How often to collect the inventory
+collectInterval: "30m"
+# serverAPIEndPoint -- Where the inventory API can be found
+serverAPIEndPoint: "http://localhost:8086"
+# uploadInventory -- Whether the inventory should be uploaded
+uploadInventory: "true"

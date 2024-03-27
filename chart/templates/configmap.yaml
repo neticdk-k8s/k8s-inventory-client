@@ -1,0 +1,11 @@
+{{- if .Values.createClusterIDConfigMap -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-id
+data:
+  provider-name: {{ .Values.clusterIDConfigMap.providerName }}
+  cluster-name: {{ .Values.clusterIDConfigMap.clusterName }}
+  cluster-fqdn: {{ .Values.clusterIDConfigMap.clusterFQDN }}
+{{- end }}

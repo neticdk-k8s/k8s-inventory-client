@@ -1,0 +1,12 @@
+---
+apiVersion: v2
+name: k8s-inventory-client
+description: Inventory Client Helm Chart
+type: application
+version: 0.1.0
+appVersion: "0.6.2"
+sources:
+  - https://github.com/neticdk-k8s/k8s-inventory-client
+maintainers:
+  - name: Netic A/S
+    email: support@netic.dk
