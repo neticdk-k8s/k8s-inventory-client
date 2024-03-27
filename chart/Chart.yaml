@@ -3,8 +3,8 @@ apiVersion: v2
 name: k8s-inventory-client
 description: Inventory Client Helm Chart
 type: application
-version: 0.1.0
-appVersion: "0.6.3"
+version: 0.1.1
+appVersion: "0.6.4"
 sources:
   - https://github.com/neticdk-k8s/k8s-inventory-client
 maintainers:
