@@ -20,6 +20,16 @@ bin/k8s-inventory-client:
 		--tag neticdk-k8s/k8s-inventory-client \
 		.
 
+.PHONY: release-patch
+release-patch:
+	@echo "Releasing patch version..."
+	@hack/release.sh patch
+
+.PHONY: release-minor
+release-minor:
+	@echo "Releasing minor version..."
+	@hack/release.sh minor
+
 # Runs go lint
 .PHONY: lint
 lint:
