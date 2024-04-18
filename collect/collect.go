@@ -65,6 +65,8 @@ type uploadResponseServiceLevel struct {
 type uploadResponseMetaData struct {
 	ClusterType            string                     `json:"cluster_type,omitempty"`
 	Description            string                     `json:"description,omitempty"`
+	Partition              string                     `json:"partition,omitempty"`
+	Region                 string                     `json:"region,omitempty"`
 	EnvironmentName        string                     `json:"environment_name,omitempty"`
 	InfrastructureProvider string                     `json:"infrastructure_provider,omitempty"`
 	ResilienceZone         string                     `json:"resilience_zone,omitempty"`
