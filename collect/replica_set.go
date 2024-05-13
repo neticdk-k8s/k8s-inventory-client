@@ -12,25 +12,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectReplicaSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectReplicaSets(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	rsets := make([]*inventory.Workload, 0)
 
 	replicaSetList, err := cs.AppsV1().
 		ReplicaSets("").
-		List(context.Background(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("getting ReplicaSets: %v", err)
 	}
 	var errs []error
 	for _, o := range replicaSetList.Items {
-		rset, err := collectReplicaSet(client, o)
+		rset, err := collectReplicaSet(ctx, client, o)
 		errs = append(errs, err)
 		rsets = append(rsets, rset)
 	}
 	return rsets, errors.Join(errs...)
 }
 
-func collectReplicaSet(client client.Client, o v1.ReplicaSet) (*inventory.Workload, error) {
+func collectReplicaSet(ctx context.Context, client client.Client, o v1.ReplicaSet) (*inventory.Workload, error) {
 	r := inventory.NewReplicaSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -50,7 +50,7 @@ func collectReplicaSet(client client.Client, o v1.ReplicaSet) (*inventory.Worklo
 		AvailableReplicas:    o.Status.AvailableReplicas,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}

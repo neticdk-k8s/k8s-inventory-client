@@ -13,31 +13,35 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectPods(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectPods(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, []*inventory.Workload, error) {
 	pods := make([]*inventory.Workload, 0)
+	owners := []*inventory.Workload{}
 	options := metav1.ListOptions{Limit: 500}
 	var errs []error
 	for {
 		podList, err := cs.CoreV1().
 			Pods("").
-			List(context.Background(), options)
+			List(ctx, options)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			errs = append(errs, fmt.Errorf("getting Pods: %v", err))
 		}
 		for _, o := range podList.Items {
-			pod, err := collectPod(client, o)
+			pod, owner, err := collectPod(ctx, client, o)
 			errs = append(errs, err)
 			pods = append(pods, pod)
+			if owner != nil {
+				owners = append(owners, owner)
+			}
 		}
 		if podList.Continue == "" {
 			break
 		}
 		options.Continue = podList.Continue
 	}
-	return pods, errors.Join(errs...)
+	return pods, owners, errors.Join(errs...)
 }
 
-func collectPod(client client.Client, o v1.Pod) (*inventory.Workload, error) {
+func collectPod(ctx context.Context, client client.Client, o v1.Pod) (*inventory.Workload, *inventory.Workload, error) {
 	r := inventory.NewPod()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -93,13 +97,13 @@ func collectPod(client client.Client, o v1.Pod) (*inventory.Workload, error) {
 	}
 	r.Status = podStatus
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, owner, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	r.RootOwner = rootOwner
 
-	return r, nil
+	return r, owner, nil
 }
 
 func volumeSource(v v1.Volume) string {

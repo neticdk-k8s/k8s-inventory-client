@@ -13,14 +13,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectJobs(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	jobs := make([]*inventory.Workload, 0)
 	options := metav1.ListOptions{Limit: 500}
 	var errs []error
 	for {
 		jobList, err := cs.BatchV1().
 			Jobs("").
-			List(context.Background(), options)
+			List(ctx, options)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return nil, fmt.Errorf("getting Jobs/v1: %v", err)
 		}
@@ -33,7 +33,7 @@ func collectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload,
 					}
 				}
 			}
-			job, err := collectJob(client, o)
+			job, err := collectJob(ctx, client, o)
 			errs = append(errs, err)
 			jobs = append(jobs, job)
 		}
@@ -45,7 +45,7 @@ func collectJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload,
 	return jobs, errors.Join(errs...)
 }
 
-func collectJob(client client.Client, o v1.Job) (*inventory.Workload, error) {
+func collectJob(ctx context.Context, client client.Client, o v1.Job) (*inventory.Workload, error) {
 	r := inventory.NewJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -69,7 +69,7 @@ func collectJob(client client.Client, o v1.Job) (*inventory.Workload, error) {
 		Failed:         o.Status.Failed,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}
