@@ -51,10 +51,14 @@ func resolveRootOwner(ctx context.Context, kc client.Client, obj client.Object) 
 			OwnerReferences:   rootObj.GetOwnerReferences(),
 		}
 
+		apiGroup := rootOwner.APIGroup
+		if apiGroup == "" {
+			apiGroup = "core"
+		}
 		ownerWorkload := &inventory.Workload{
 			TypeMeta: inventory.TypeMeta{
 				Kind:         rootOwner.Kind,
-				APIGroup:     rootOwner.APIGroup,
+				APIGroup:     apiGroup,
 				APIVersion:   rootOwner.APIVersion,
 				ResourceType: strings.ToLower(rootOwner.Kind),
 			},

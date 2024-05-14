@@ -45,7 +45,7 @@ func collectWorkloads(ctx context.Context, cs *ck.Clientset, client client.Clien
 				found = true
 			}
 		}
-		if !found {
+		if !found && !(o.Kind == "Node" && o.APIGroup == "core") && o.Namespace != "" {
 			i.Workloads = append(i.Workloads, o)
 		}
 	}
