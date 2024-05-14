@@ -3,7 +3,6 @@ package collect
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	inventory "github.com/neticdk-k8s/k8s-inventory"
 	v1 "k8s.io/api/core/v1"
@@ -55,12 +54,18 @@ func resolveRootOwner(ctx context.Context, kc client.Client, obj client.Object) 
 		if apiGroup == "" {
 			apiGroup = "core"
 		}
+
+		mapping, err := kc.RESTMapper().RESTMapping(rootObj.GroupVersionKind().GroupKind(), rootObj.GroupVersionKind().Version)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		ownerWorkload := &inventory.Workload{
 			TypeMeta: inventory.TypeMeta{
 				Kind:         rootOwner.Kind,
 				APIGroup:     apiGroup,
 				APIVersion:   rootOwner.APIVersion,
-				ResourceType: strings.ToLower(rootOwner.Kind),
+				ResourceType: mapping.Resource.Resource,
 			},
 			ObjectMeta: inventory.NewObjectMeta(meta),
 			Spec:       map[string]interface{}{},
