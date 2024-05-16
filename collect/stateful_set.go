@@ -12,25 +12,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectStatefulSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectStatefulSets(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	ssets := make([]*inventory.Workload, 0)
 
 	statefulSetList, err := cs.AppsV1().
 		StatefulSets("").
-		List(context.Background(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("getting StatefulSets: %v", err)
 	}
 	var errs []error
 	for _, o := range statefulSetList.Items {
-		sset, err := collectStatefulSet(client, o)
+		sset, err := collectStatefulSet(ctx, client, o)
 		errs = append(errs, err)
 		ssets = append(ssets, sset)
 	}
 	return ssets, errors.Join(errs...)
 }
 
-func collectStatefulSet(client client.Client, o v1.StatefulSet) (*inventory.Workload, error) {
+func collectStatefulSet(ctx context.Context, client client.Client, o v1.StatefulSet) (*inventory.Workload, error) {
 	r := inventory.NewStatefulSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -53,7 +53,7 @@ func collectStatefulSet(client client.Client, o v1.StatefulSet) (*inventory.Work
 		AvailableReplicas: o.Status.AvailableReplicas,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}

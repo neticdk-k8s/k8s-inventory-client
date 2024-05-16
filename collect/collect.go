@@ -3,6 +3,7 @@ package collect
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -207,6 +208,8 @@ func (c *InventoryCollection) Collect() {
 
 	log.Info().Msg("entering inventory collection loop")
 	for {
+		ctx := context.Background()
+
 		c.inventory = inventory.NewInventory()
 		c.inventory.CollectionSucceeded = true
 		c.inventory.ClientVersion = version.VERSION
@@ -242,7 +245,7 @@ func (c *InventoryCollection) Collect() {
 		c.handleError(collectCustomResources(cs, c.inventory))
 
 		log.Debug().Str("collect", "workload").Msg("")
-		c.handleError(collectWorkloads(cs, client, c.inventory))
+		c.handleError(collectWorkloads(ctx, cs, client, c.inventory))
 
 		if c.uploadInventory {
 			if err := c.upload(); err != nil {

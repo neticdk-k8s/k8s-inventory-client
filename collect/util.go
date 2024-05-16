@@ -22,13 +22,14 @@ func readConfigMapByName(cs *ck.Clientset, ns string, name string) (*v1.ConfigMa
 	return res, nil
 }
 
-func resolveRootOwner(kc client.Client, obj client.Object) (*inventory.RootOwner, error) {
-	if len(obj.GetOwnerReferences()) == 0 {
-		return nil, nil
+func resolveRootOwner(ctx context.Context, kc client.Client, obj client.Object) (*inventory.RootOwner, *inventory.Workload, error) {
+	owner := metav1.GetControllerOf(obj)
+	if owner == nil {
+		return nil, nil, nil
 	}
-	rootObj, err := resolveOwnerChain(kc, obj)
+	rootObj, err := resolveOwnerChain(ctx, kc, obj.GetNamespace(), owner)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if rootObj != nil {
@@ -39,25 +40,58 @@ func resolveRootOwner(kc client.Client, obj client.Object) (*inventory.RootOwner
 			Name:       rootObj.GetName(),
 			Namespace:  rootObj.GetNamespace(),
 		}
-		return rootOwner, nil
+
+		meta := metav1.ObjectMeta{
+			Name:              rootObj.GetName(),
+			Namespace:         rootObj.GetNamespace(),
+			Labels:            rootObj.GetLabels(),
+			Annotations:       rootObj.GetAnnotations(),
+			CreationTimestamp: rootObj.GetCreationTimestamp(),
+			OwnerReferences:   rootObj.GetOwnerReferences(),
+		}
+
+		apiGroup := rootOwner.APIGroup
+		if apiGroup == "" {
+			apiGroup = "core"
+		}
+
+		mapping, err := kc.RESTMapper().RESTMapping(rootObj.GroupVersionKind().GroupKind(), rootObj.GroupVersionKind().Version)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		ownerWorkload := &inventory.Workload{
+			TypeMeta: inventory.TypeMeta{
+				Kind:         rootOwner.Kind,
+				APIGroup:     apiGroup,
+				APIVersion:   rootOwner.APIVersion,
+				ResourceType: mapping.Resource.Resource,
+			},
+			ObjectMeta: inventory.NewObjectMeta(meta),
+			Spec:       map[string]interface{}{},
+			Status:     map[string]interface{}{},
+		}
+
+		return rootOwner, ownerWorkload, nil
 	}
-	return nil, nil
+
+	return nil, nil, nil
 }
 
-func resolveOwnerChain(kc client.Client, obj client.Object) (client.Object, error) {
-	owner := metav1.GetControllerOf(obj)
-	if owner != nil {
-		o := &unstructured.Unstructured{}
-		o.SetAPIVersion(owner.APIVersion)
-		o.SetKind(owner.Kind)
-		err := kc.Get(context.TODO(), client.ObjectKey{Namespace: obj.GetNamespace(), Name: owner.Name}, o)
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				return nil, nil
-			}
-			return nil, fmt.Errorf("getting object from object ref: %w", err)
+func resolveOwnerChain(ctx context.Context, kc client.Client, namespace string, owner *metav1.OwnerReference) (*unstructured.Unstructured, error) {
+	obj := &unstructured.Unstructured{}
+	obj.SetAPIVersion(owner.APIVersion)
+	obj.SetKind(owner.Kind)
+	err := kc.Get(ctx, client.ObjectKey{Namespace: namespace, Name: owner.Name}, obj)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, nil
 		}
-		return resolveOwnerChain(kc, o)
+		return nil, fmt.Errorf("getting object from object ref: %w", err)
+	}
+	owner = metav1.GetControllerOf(obj)
+	if owner != nil {
+		return resolveOwnerChain(ctx, kc, namespace, owner)
 	}
 	return obj, nil
 }

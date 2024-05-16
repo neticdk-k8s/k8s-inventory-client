@@ -12,25 +12,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectDaemonSets(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectDaemonSets(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	dsets := make([]*inventory.Workload, 0)
 
 	daemonSetList, err := cs.AppsV1().
 		DaemonSets("").
-		List(context.Background(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("getting DaemonSets: %v", err)
 	}
 	var errs []error
 	for _, o := range daemonSetList.Items {
-		dset, err := collectDaemonSet(client, o)
+		dset, err := collectDaemonSet(ctx, client, o)
 		errs = append(errs, err)
 		dsets = append(dsets, dset)
 	}
 	return dsets, errors.Join(errs...)
 }
 
-func collectDaemonSet(client client.Client, o v1.DaemonSet) (*inventory.Workload, error) {
+func collectDaemonSet(ctx context.Context, client client.Client, o v1.DaemonSet) (*inventory.Workload, error) {
 	r := inventory.NewDaemonSet()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -49,7 +49,7 @@ func collectDaemonSet(client client.Client, o v1.DaemonSet) (*inventory.Workload
 		DesiredNumberScheduled: o.Status.DesiredNumberScheduled,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}

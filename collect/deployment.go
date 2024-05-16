@@ -13,24 +13,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectDeployments(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectDeployments(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	deployments := make([]*inventory.Workload, 0)
 	deploymentList, err := cs.AppsV1().
 		Deployments("").
-		List(context.Background(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("getting Deployments: %v", err)
 	}
 	var errs []error
 	for _, o := range deploymentList.Items {
-		deployment, err := collectDeployment(client, o)
+		deployment, err := collectDeployment(ctx, client, o)
 		errs = append(errs, err)
 		deployments = append(deployments, deployment)
 	}
 	return deployments, errors.Join(errs...)
 }
 
-func collectDeployment(client client.Client, o v1.Deployment) (*inventory.Workload, error) {
+func collectDeployment(ctx context.Context, client client.Client, o v1.Deployment) (*inventory.Workload, error) {
 	r := inventory.NewDeployment()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -52,7 +52,7 @@ func collectDeployment(client client.Client, o v1.Deployment) (*inventory.Worklo
 		UnavailableReplicas: o.Status.UnavailableReplicas,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}

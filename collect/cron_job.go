@@ -15,68 +15,68 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func collectCronJobs(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectCronJobs(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
-	v1Jobs, v1Err := collectCronJobsV1(cs, client)
+	v1Jobs, v1Err := collectCronJobsV1(ctx, cs, client)
 	cjs = append(cjs, v1Jobs...)
 	var (
 		v1BetaErr  error
 		v1BetaJobs []*inventory.Workload
 	)
 	if len(cjs) == 0 {
-		v1BetaJobs, v1BetaErr = collectCronJobsV1beta1(cs, client)
+		v1BetaJobs, v1BetaErr = collectCronJobsV1beta1(ctx, cs, client)
 		cjs = append(cjs, v1BetaJobs...)
 	}
 	return cjs, errors.Join(v1Err, v1BetaErr)
 }
 
-func collectCronJobsV1beta1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectCronJobsV1beta1(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1beta1().
 		CronJobs("").
-		List(context.Background(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("getting CronJobs/v1beta1: %v", err)
 	}
 	var errs []error
 	for _, o := range cronJobList.Items {
-		cj, err := collectCronJob(inventory.NewCronJob(), client, o)
+		cj, err := collectCronJob(ctx, inventory.NewCronJob(), client, o)
 		errs = append(errs, err)
 		cjs = append(cjs, cj)
 	}
 	return cjs, errors.Join(errs...)
 }
 
-func collectCronJobsV1(cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
+func collectCronJobsV1(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, error) {
 	cjs := make([]*inventory.Workload, 0)
 	cronJobList, err := cs.BatchV1().
 		CronJobs("").
-		List(context.Background(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("getting CronJobs/v1: %v", err)
 	}
 	var errs []error
 	for _, o := range cronJobList.Items {
-		cj, err := collectCronJob(inventory.NewCronJob(), client, o)
+		cj, err := collectCronJob(ctx, inventory.NewCronJob(), client, o)
 		errs = append(errs, err)
 		cjs = append(cjs, cj)
 	}
 	return cjs, errors.Join(errs...)
 }
 
-func collectCronJob(cj *inventory.Workload, client client.Client, o interface{}) (*inventory.Workload, error) {
+func collectCronJob(ctx context.Context, cj *inventory.Workload, client client.Client, o interface{}) (*inventory.Workload, error) {
 	switch obj := o.(type) {
 	case v1beta1.CronJob:
-		return collectCronJobV1Beta1(obj, client)
+		return collectCronJobV1Beta1(ctx, obj, client)
 	case v1.CronJob:
-		return collectCronJobV1(obj, client)
+		return collectCronJobV1(ctx, obj, client)
 	default:
 		log.Warn().Msgf("api/resource: %v not supported", obj)
 	}
 	return cj, nil
 }
 
-func collectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, error) {
+func collectCronJobV1(ctx context.Context, o v1.CronJob, client client.Client) (*inventory.Workload, error) {
 	r := inventory.NewCronJob()
 
 	r.ObjectMeta = inventory.NewObjectMeta(o.ObjectMeta)
@@ -95,7 +95,7 @@ func collectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, 
 		LastSuccessfulTime: o.Status.LastSuccessfulTime,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func collectCronJobV1(o v1.CronJob, client client.Client) (*inventory.Workload, 
 	return r, nil
 }
 
-func collectCronJobV1Beta1(o v1beta1.CronJob, client client.Client) (*inventory.Workload, error) {
+func collectCronJobV1Beta1(ctx context.Context, o v1beta1.CronJob, client client.Client) (*inventory.Workload, error) {
 	r := inventory.NewCronJob()
 	r.APIVersion = "v1beta1"
 
@@ -124,7 +124,7 @@ func collectCronJobV1Beta1(o v1beta1.CronJob, client client.Client) (*inventory.
 		LastSuccessfulTime: o.Status.LastSuccessfulTime,
 	}
 
-	rootOwner, err := resolveRootOwner(client, &o)
+	rootOwner, _, err := resolveRootOwner(ctx, client, &o)
 	if err != nil {
 		return nil, err
 	}
