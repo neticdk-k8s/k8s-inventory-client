@@ -14,7 +14,7 @@ import (
 )
 
 func collectPods(ctx context.Context, cs *ck.Clientset, client client.Client) ([]*inventory.Workload, []*inventory.Workload, error) {
-	pods := make([]*inventory.Workload, 0)
+	pods := []*inventory.Workload{}
 	owners := []*inventory.Workload{}
 	options := metav1.ListOptions{Limit: 500}
 	var errs []error

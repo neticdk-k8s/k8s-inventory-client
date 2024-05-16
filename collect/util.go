@@ -92,7 +92,6 @@ func resolveOwnerChain(ctx context.Context, kc client.Client, namespace string, 
 	owner = metav1.GetControllerOf(obj)
 	if owner != nil {
 		return resolveOwnerChain(ctx, kc, namespace, owner)
-	} else {
-		return obj, nil
 	}
+	return obj, nil
 }
